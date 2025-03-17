@@ -1,11 +1,29 @@
-import { Controller, Get, Post, Body, Param, Delete, Put } from '@nestjs/common';
+import { Controller, Get, Post, Body, Param, Delete, Put, Headers, UnauthorizedException } from '@nestjs/common';
 import { ParentsService } from './parents.service';
 import { CreateParentDto } from './dto/create-parent.dto';
 import { Parent } from './entities/parent.entity';
+import { JwtService } from '@nestjs/jwt';
 
 @Controller('parents')
 export class ParentsController {
-  constructor(private readonly parentsService: ParentsService) {}
+  constructor(
+    private readonly parentsService: ParentsService,
+    private readonly jwtService: JwtService,
+  ) {}
+
+  @Get('me')
+  async getParentFromToken(@Headers('x-auth-token') token: string): Promise<Parent> {
+    if (!token) {
+      throw new UnauthorizedException('No token provided');
+    }
+
+    try {
+      const decoded = this.jwtService.verify(token) as { sub: number };
+      return await this.parentsService.getParentById(decoded.sub);
+    } catch (error) {
+      throw new UnauthorizedException('Invalid token');
+    }
+  }
 
   @Post()
   async create(@Body() createParentDto: CreateParentDto): Promise<Parent> {

@@ -81,4 +81,17 @@ export class ParentsService {
     parent.students = parent.students.filter(usid => usid !== studentUsid);
     return await this.parentRepository.save(parent);
   }
+
+  async getParentById(id: number): Promise<Parent> {
+    const parent = await this.parentRepository.findOne({
+      where: { id },
+      select: ['id', 'parentName', 'role', 'gender', 'campus', 'address']
+    });
+
+    if (!parent) {
+      throw new NotFoundException(`Parent with ID ${id} not found`);
+    }
+
+    return parent;
+  }
 } 
