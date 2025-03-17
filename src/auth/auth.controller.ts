@@ -30,7 +30,8 @@ export class AuthController {
     // Return success response without exposing token
     return {
       status: result.status,
-      parent: result.parent
+      token:result.access_token
+     
     };
   }
 } 
