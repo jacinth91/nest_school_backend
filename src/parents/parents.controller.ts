@@ -1,4 +1,5 @@
-import { Controller, Get, Post, Body, Param, Delete, Put, Headers, UnauthorizedException } from '@nestjs/common';
+import { Controller, Get, Post, Body, Param, Delete, Put, Req, UnauthorizedException } from '@nestjs/common';
+import { Request } from 'express';
 import { ParentsService } from './parents.service';
 import { CreateParentDto } from './dto/create-parent.dto';
 import { Parent } from './entities/parent.entity';
@@ -12,7 +13,9 @@ export class ParentsController {
   ) {}
 
   @Get('me')
-  async getParentFromToken(@Headers('x-auth-token') token: string): Promise<Parent> {
+  async getParentFromToken(@Req() request: Request): Promise<Parent> {
+    const token = request.cookies['jwt']; // Get token from cookies
+
     if (!token) {
       throw new UnauthorizedException('No token provided');
     }
