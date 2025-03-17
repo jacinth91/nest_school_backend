@@ -22,8 +22,8 @@ export class AuthController {
     // Set JWT token in HTTP-only cookie
     response.cookie('jwt', result.access_token, {
       httpOnly: true,
-      secure: false, // Use secure cookies in production
-      sameSite: 'lax',
+      secure: true, // Use secure cookies in production
+      sameSite: 'none',
       maxAge: 24 * 60 * 60 * 1000, // 1 day
     });
 
