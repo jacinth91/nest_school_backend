@@ -22,9 +22,9 @@ export class ParentsController {
     return await this.parentsService.findOne(id);
   }
 
-  @Get('email/:email')
-  async findByEmail(@Param('email') email: string): Promise<Parent> {
-    return await this.parentsService.findByEmail(email);
+  @Get('student/:usid')
+  async findByStudentUsid(@Param('usid') usid: string): Promise<Parent> {
+    return await this.parentsService.findByStudentUsid(usid);
   }
 
   @Put(':id/add-student/:usid')

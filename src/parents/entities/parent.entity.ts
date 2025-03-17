@@ -1,5 +1,4 @@
-import { Entity, Column, PrimaryGeneratedColumn, ManyToMany, JoinTable } from 'typeorm';
-import { Student } from '../../students/entities/student.entity';
+import { Entity, Column, PrimaryGeneratedColumn } from 'typeorm';
 
 @Entity('parents')
 export class Parent {
@@ -9,20 +8,21 @@ export class Parent {
   @Column({ name: 'parent_name' })
   parentName: string;
 
-  @Column({ unique: true })
-  email: string;
+  @Column('simple-array', { name: 'students' })
+  students: string[];
 
-  @Column()
-  phone: string;
+  @Column({ length: 10, nullable: true })
+  gender: string;
 
-  @Column()
+  @Column({ nullable: true })
+  campus: string;
+
+  @Column({ type: 'text', nullable: true })
   address: string;
 
-  @ManyToMany(() => Student)
-  @JoinTable({
-    name: 'parent_students',
-    joinColumn: { name: 'parent_id', referencedColumnName: 'id' },
-    inverseJoinColumn: { name: 'student_usid', referencedColumnName: 'usid' },
-  })
-  students: Student[];
+  @Column()
+  password: string;
+
+  @Column({ default: 'parent' })
+  role: string;
 } 
