@@ -15,7 +15,7 @@ export class ParentsController {
   @Get('me')
   async getParentFromToken(@Req() request: Request): Promise<Parent> {
     const token = request.cookies['jwt']; // Get token from cookies
-
+    console.log(token,'front end call *********');
     if (!token) {
       throw new UnauthorizedException('No token provided');
     }

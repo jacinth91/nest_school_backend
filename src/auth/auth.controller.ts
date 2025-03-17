@@ -23,7 +23,7 @@ export class AuthController {
     response.cookie('jwt', result.access_token, {
       httpOnly: true,
       secure: false, // Use secure cookies in production
-      sameSite: 'none',
+      sameSite: 'lax',
       maxAge: 24 * 60 * 60 * 1000, // 1 day
     });
 
