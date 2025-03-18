@@ -11,6 +11,8 @@ import { OrdersModule } from './orders/orders.module';
 import { AuthModule } from './auth/auth.module';
 import { FeedbackModule } from './feedback/feedback.module';
 import { NotificationsModule } from './notifications/notifications.module';
+import { BundlesModule } from './bundles/bundles.module';
+import { ClassCategoriesModule } from './class-categories/class-categories.module';
 
 @Module({
   imports: [
@@ -23,6 +25,8 @@ import { NotificationsModule } from './notifications/notifications.module';
     AuthModule,
     FeedbackModule,
     NotificationsModule,
+    BundlesModule,
+    ClassCategoriesModule,
   ],
   controllers: [AppController],
   providers: [AppService],

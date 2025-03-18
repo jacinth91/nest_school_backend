@@ -44,21 +44,16 @@ export class AuthService {
       throw new UnauthorizedException('Invalid credentials');
     }
 
-    const payload = { sub: parent.id, role: parent.role };
+    const payload = { sub: student.usid, role: parent.role };
+    console.log('Login payload:', payload);
+    
     const token = this.jwtService.sign(payload);
+    console.log('Generated token:', token);
 
     return {
       status: 'success',
-      access_token: token,
-      parent: {
-        id: parent.id,
-        name: parent.parentName,
-        role: parent.role || 'parent',
-        gender: parent.gender,
-        campus: parent.campus,
-        address: parent.address,
-        students: parent.students
-      }
+      access_token: token
+      
     };
   }
 } 

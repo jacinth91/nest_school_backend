@@ -1,4 +1,5 @@
-import { Entity, Column, PrimaryGeneratedColumn } from 'typeorm';
+import { Entity, Column, PrimaryGeneratedColumn, ManyToMany, JoinTable } from 'typeorm';
+import { Student } from '../../students/entities/student.entity';
 
 @Entity('parents')
 export class Parent {
@@ -25,4 +26,6 @@ export class Parent {
 
   @Column({ default: 'parent' })
   role: string;
+
+  studentData?: Student[];
 } 

@@ -15,39 +15,18 @@ export class ParentsService {
   ) {}
 
   async create(createParentDto: CreateParentDto): Promise<Parent> {
-    const students = await Promise.all(
-      createParentDto.studentUsids.map(async (usid) => {
-        const student = await this.studentRepository.findOne({ where: { usid } });
-        if (!student) {
-          throw new NotFoundException(`Student with USID ${usid} not found`);
-        }
-        return student;
-      })
-    );
-
-    const parent = this.parentRepository.create({
-      parentName: createParentDto.parentName,
-      students: createParentDto.studentUsids,
-      gender: createParentDto.gender,
-      campus: createParentDto.campus,
-      address: createParentDto.address,
-      password: createParentDto.password,
-      role: 'parent'
-    });
-
+    const parent = this.parentRepository.create(createParentDto);
     return await this.parentRepository.save(parent);
   }
 
   async findAll(): Promise<Parent[]> {
-    return await this.parentRepository.find({
-      relations: ['students'],
-    });
+    return await this.parentRepository.find();
   }
 
   async findOne(id: number): Promise<Parent> {
     const parent = await this.parentRepository.findOne({
       where: { id },
-      relations: ['students'],
+      relations: ['students']
     });
 
     if (!parent) {
@@ -55,6 +34,17 @@ export class ParentsService {
     }
 
     return parent;
+  }
+
+  async update(id: number, updateParentDto: CreateParentDto): Promise<Parent> {
+    const parent = await this.findOne(id);
+    Object.assign(parent, updateParentDto);
+    return await this.parentRepository.save(parent);
+  }
+
+  async remove(id: number): Promise<void> {
+    const parent = await this.findOne(id);
+    await this.parentRepository.remove(parent);
   }
 
   async findByStudentUsid(studentUsid: string): Promise<Parent> {
@@ -67,7 +57,19 @@ export class ParentsService {
       throw new NotFoundException(`Parent with student USID ${studentUsid} not found`);
     }
 
-    return parent;
+    // Fetch student data for each student ID
+    const studentData = await Promise.all(
+      parent.students.map(async (usid) => {
+        const student = await this.studentRepository.findOne({ where: { usid } });
+        return student;
+      })
+    );
+
+    // Add student data to parent object
+    return {
+      ...parent,
+      studentData
+    };
   }
 
   async addStudent(parentId: number, studentUsid: string): Promise<Parent> {
@@ -80,18 +82,5 @@ export class ParentsService {
     const parent = await this.findOne(parentId);
     parent.students = parent.students.filter(usid => usid !== studentUsid);
     return await this.parentRepository.save(parent);
-  }
-
-  async getParentById(id: number): Promise<Parent> {
-    const parent = await this.parentRepository.findOne({
-      where: { id },
-      select: ['id', 'parentName', 'role', 'gender', 'campus', 'address']
-    });
-
-    if (!parent) {
-      throw new NotFoundException(`Parent with ID ${id} not found`);
-    }
-
-    return parent;
   }
 } 

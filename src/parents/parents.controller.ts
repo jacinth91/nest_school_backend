@@ -1,31 +1,18 @@
-import { Controller, Get, Post, Body, Param, Delete, Put, Req, UnauthorizedException } from '@nestjs/common';
+import { Controller, Get, Post, Body, Param, Delete, Put, Req } from '@nestjs/common';
 import { Request } from 'express';
 import { ParentsService } from './parents.service';
 import { CreateParentDto } from './dto/create-parent.dto';
 import { Parent } from './entities/parent.entity';
-import { JwtService } from '@nestjs/jwt';
 
 @Controller('parents')
 export class ParentsController {
   constructor(
     private readonly parentsService: ParentsService,
-    private readonly jwtService: JwtService,
   ) {}
 
-  @Get('me')
-  async getParentFromToken(@Req() request: Request): Promise<Parent> {
-    const token = request.cookies['jwt']; // Get token from cookies
-    console.log(token,'front end call *********');
-    if (!token) {
-      throw new UnauthorizedException('No token provided');
-    }
-
-    try {
-      const decoded = this.jwtService.verify(token) as { sub: number };
-      return await this.parentsService.getParentById(decoded.sub);
-    } catch (error) {
-      throw new UnauthorizedException('Invalid token');
-    }
+  @Get('me/:usid')
+  async getCurrentParent(@Param('usid') usid: string): Promise<Parent> {
+    return this.parentsService.findByStudentUsid(usid);
   }
 
   @Post()

@@ -15,23 +15,13 @@ export class AuthController {
   @ApiResponse({ status: 401, description: 'Invalid credentials' })
   async login(
     @Body() loginDto: LoginDto,
-    @Res({ passthrough: true }) response: Response,
   ) {
     const result = await this.authService.login(loginDto);
     
-    // Set JWT token in HTTP-only cookie
-    response.cookie('jwt', result.access_token, {
-      httpOnly: true,
-      secure: true, // Use secure cookies in production
-      sameSite: 'none',
-      maxAge: 24 * 60 * 60 * 1000, // 1 day
-    });
-
-    // Return success response without exposing token
     return {
       status: result.status,
-      token:result.access_token
-     
+      
+      access_token: result.access_token
     };
   }
 } 
