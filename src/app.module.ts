@@ -13,6 +13,7 @@ import { FeedbackModule } from './feedback/feedback.module';
 import { NotificationsModule } from './notifications/notifications.module';
 import { BundlesModule } from './bundles/bundles.module';
 import { ClassCategoriesModule } from './class-categories/class-categories.module';
+import { ProfilesModule } from './profiles/profiles.module';
 
 @Module({
   imports: [
@@ -27,6 +28,7 @@ import { ClassCategoriesModule } from './class-categories/class-categories.modul
     NotificationsModule,
     BundlesModule,
     ClassCategoriesModule,
+    ProfilesModule
   ],
   controllers: [AppController],
   providers: [AppService],
