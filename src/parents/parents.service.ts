@@ -26,7 +26,7 @@ export class ParentsService {
   async findOne(id: number): Promise<Parent> {
     const parent = await this.parentRepository.findOne({
       where: { id },
-      relations: ['students']
+      select: ['id', 'parentName', 'students', 'gender', 'campus', 'address','role']
     });
 
     if (!parent) {
@@ -74,7 +74,17 @@ export class ParentsService {
 
   async addStudent(parentId: number, studentUsid: string): Promise<Parent> {
     const parent = await this.findOne(parentId);
-    parent.students.push(studentUsid);
+    if (!parent) {
+      throw new NotFoundException(`Parent with ID ${parentId} not found`);
+    }
+    if (!Array.isArray(parent.students)) {
+      parent.students = [];
+    }
+  
+    // Avoid duplicate student IDs
+    if (!parent.students.includes(studentUsid)) {
+      parent.students.push(studentUsid);
+    }
     return await this.parentRepository.save(parent);
   }
 

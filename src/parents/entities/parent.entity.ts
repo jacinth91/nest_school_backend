@@ -9,7 +9,7 @@ export class Parent {
   @Column({ name: 'parent_name' })
   parentName: string;
 
-  @Column('simple-array', { name: 'students' })
+  @Column('text', { array: true, name: 'students', nullable: true })
   students: string[];
 
   @Column({ length: 10, nullable: true })
