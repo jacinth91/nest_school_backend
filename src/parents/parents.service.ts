@@ -1,4 +1,4 @@
-import { Injectable, NotFoundException, BadRequestException, InternalServerErrorException } from '@nestjs/common';
+import { Injectable, NotFoundException, BadRequestException, InternalServerErrorException, UnauthorizedException } from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
 import { Repository } from 'typeorm';
 import { Parent } from './entities/parent.entity';
@@ -144,5 +144,47 @@ export class ParentsService {
     const parent = await this.findOne(parentId);
     parent.students = parent.students.filter(usid => usid !== studentUsid);
     return await this.parentRepository.save(parent);
+  }
+
+  async verifyParentLogin(studentUsid: string): Promise<{ exists: boolean; parentData?: Parent }> {
+    if (!studentUsid) {
+      throw new BadRequestException('Student USID is required for login');
+    }
+
+    try {
+      // Find parent with the given student USID in their students array
+      const parent = await this.parentRepository
+        .createQueryBuilder('parent')
+        .where(`'${studentUsid}' = ANY(parent.students)`)
+        .getOne();
+
+      if (!parent) {
+        return { exists: false };
+      }
+
+      // Fetch student data for each student ID
+      const studentData = await Promise.all(
+        parent.students.map(async (usid) => {
+          const student = await this.studentRepository.findOne({
+            where: { usid }
+          });
+          return student;
+        })
+      );
+
+      // Return success with parent data
+      return {
+        exists: true,
+        parentData: {
+          ...parent,
+          studentData
+        }
+      };
+    } catch (error) {
+      throw new InternalServerErrorException('Error during login verification', {
+        cause: error,
+        description: error.message
+      });
+    }
   }
 } 

@@ -1,5 +1,4 @@
-import { Controller, Get, Post, Body, Param, Delete, Put, Req } from '@nestjs/common';
-import { Request } from 'express';
+import { Controller, Get, Post, Body, Param, Delete, Put } from '@nestjs/common';
 import { ParentsService } from './parents.service';
 import { CreateParentDto } from './dto/create-parent.dto';
 import { Parent } from './entities/parent.entity';

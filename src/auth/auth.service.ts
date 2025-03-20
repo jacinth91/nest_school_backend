@@ -1,4 +1,4 @@
-import { Injectable, UnauthorizedException } from '@nestjs/common';
+import { Injectable, UnauthorizedException, BadRequestException, InternalServerErrorException } from '@nestjs/common';
 import { JwtService } from '@nestjs/jwt';
 import { InjectRepository } from '@nestjs/typeorm';
 import { Repository } from 'typeorm';
@@ -18,42 +18,111 @@ export class AuthService {
   ) {}
 
   async login(loginDto: LoginDto) {
-    // First check if USID exists in student database and get parent name
-    const student = await this.studentRepository.findOne({
-      where: { usid: loginDto.usid },
-      select: ['usid', 'studentName', 'class', 'section', 'fatherName']
-    });
-
-    if (!student) {
-      throw new UnauthorizedException('Invalid student USID');
+    if (!loginDto.usid || !loginDto.password) {
+      throw new BadRequestException('Both Student USID and password are required for login');
     }
 
-    // Check if parent account exists with matching parent name
-    const parent = await this.parentRepository.findOne({
-      where: { parentName: student.fatherName },
-      select: ['id', 'parentName', 'password', 'role', 'gender', 'campus', 'address', 'students']
-    });
+    try {
+      // Find parent with the given student USID in their students array
+      const parent = await this.parentRepository
+        .createQueryBuilder('parent')
+        .where(`'${loginDto.usid}' = ANY(parent.students)`)
+        .getOne();
 
-    if (!parent) {
-      throw new UnauthorizedException('Parent account not found');
-    }
+      if (!parent) {
+        return {
+          success: false,
+          message: 'Student USID not found in any parent records',
+          exists: false
+        };
+      }
 
-    // Verify password
-    const isPasswordValid = await bcrypt.compare(loginDto.password, parent.password);
-    if (!isPasswordValid) {
-      throw new UnauthorizedException('Invalid credentials');
-    }
+      // Verify password
+      const isPasswordValid = await bcrypt.compare(loginDto.password, parent.password);
+      if (!isPasswordValid) {
+        return {
+          success: false,
+          message: 'Invalid password',
+          exists: true
+        };
+      }
 
-    const payload = { sub: student.usid, role: parent.role };
-    console.log('Login payload:', payload);
-    
-    const token = this.jwtService.sign(payload);
-    console.log('Generated token:', token);
+      // Fetch data only for the logging-in student
+      const student = await this.studentRepository.findOne({
+        where: { usid: loginDto.usid },
+        select: ['usid', 'studentName', 'class', 'section']
+      });
 
-    return {
-      status: 'success',
-      access_token: token
+      if (!student) {
+        throw new BadRequestException('Student not found');
+      }
+
+      // Generate JWT token
+      const payload = { 
+        sub: loginDto.usid, 
+        role: parent.role,
+        parentId: parent.id 
+      };
       
-    };
+      const token = this.jwtService.sign(payload);
+
+      // Return success with parent data and specific student data
+      return {
+        success: true,
+        message: 'Login successful',
+        exists: true,
+        name:parent.parentName,
+        student: student,
+        access_token: token
+      };
+
+    } catch (error) {
+      throw new InternalServerErrorException('Error during login verification', {
+        cause: error,
+        description: error.message
+      });
+    }
+  }
+
+  async parentLogin(studentUsid: string): Promise<{ exists: boolean; parentData?: any }> {
+    if (!studentUsid) {
+      throw new BadRequestException('Student USID is required for login');
+    }
+
+    try {
+      // Find parent with the given student USID in their students array
+      const parent = await this.parentRepository
+        .createQueryBuilder('parent')
+        .where(`'${studentUsid}' = ANY(parent.students)`)
+        .getOne();
+
+      if (!parent) {
+        return { exists: false };
+      }
+
+      // Fetch student data for each student ID
+      const studentData = await Promise.all(
+        parent.students.map(async (usid) => {
+          const student = await this.studentRepository.findOne({
+            where: { usid }
+          });
+          return student;
+        })
+      );
+
+      // Return success with parent data
+      return {
+        exists: true,
+        parentData: {
+          ...parent,
+          studentData
+        }
+      };
+    } catch (error) {
+      throw new InternalServerErrorException('Error during login verification', {
+        cause: error,
+        description: error.message
+      });
+    }
   }
 } 
