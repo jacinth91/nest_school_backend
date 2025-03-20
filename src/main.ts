@@ -10,8 +10,6 @@ async function bootstrap() {
   app.enableCors({
     origin: ['http://localhost:3000','https://school-mgt-rho.vercel.app'], // Allow all origins using array
     methods: ['GET', 'HEAD', 'PUT','POST', 'DELETE','OPTIONS'],
-    allowedHeaders: ['Content-Type', 'Accept', 'x-auth-token', 'Authorization', 'Origin', 'X-Requested-With'],
-    exposedHeaders: ['Content-Range', 'X-Content-Range'],
     credentials: true,
     maxAge: 3600, // Cache preflight requests for 1 hour
   });
