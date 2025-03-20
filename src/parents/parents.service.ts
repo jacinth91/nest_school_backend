@@ -1,4 +1,4 @@
-import { Injectable, NotFoundException } from '@nestjs/common';
+import { Injectable, NotFoundException, BadRequestException, InternalServerErrorException } from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
 import { Repository } from 'typeorm';
 import { Parent } from './entities/parent.entity';
@@ -73,19 +73,71 @@ export class ParentsService {
   }
 
   async addStudent(parentId: number, studentUsid: string): Promise<Parent> {
-    const parent = await this.findOne(parentId);
-    if (!parent) {
-      throw new NotFoundException(`Parent with ID ${parentId} not found`);
+    if (!parentId || !studentUsid) {
+      throw new BadRequestException('Both parent ID and student USID are required');
     }
-    if (!Array.isArray(parent.students)) {
-      parent.students = [];
-    }
-  
-    // Avoid duplicate student IDs
-    if (!parent.students.includes(studentUsid)) {
+
+    try {
+      // Check if parent exists
+      const parent = await this.parentRepository.findOne({
+        where: { id: parentId }
+      });
+
+      if (!parent) {
+        throw new NotFoundException(`Parent with ID ${parentId} not found`);
+      }
+
+      // Check if student exists
+      const student = await this.studentRepository.findOne({
+        where: { usid: studentUsid }
+      });
+
+      if (!student) {
+        throw new NotFoundException(`Student with USID ${studentUsid} not found`);
+      }
+
+      // Initialize students array if it doesn't exist
+      if (!Array.isArray(parent.students)) {
+        parent.students = [];
+      }
+
+      // Check maximum student limit
+      const MAX_STUDENTS = 3;
+      if (parent.students.length >= MAX_STUDENTS) {
+        throw new BadRequestException(`Cannot add more students. Maximum limit of ${MAX_STUDENTS} students per parent has been reached`);
+      }
+
+      // Check if student is already linked to this parent
+      if (parent.students.includes(studentUsid)) {
+        throw new BadRequestException(`Student with USID ${studentUsid} is already linked to this parent`);
+      }
+
+      // Check if student is already linked to another parent
+      const existingParent = await this.parentRepository
+        .createQueryBuilder('parent')
+        .where(`'${studentUsid}' = ANY(parent.students)`)
+        .andWhere('parent.id != :parentId', { parentId })
+        .getOne();
+
+      if (existingParent) {
+        throw new BadRequestException(`Student with USID ${studentUsid} is already linked to another parent`);
+      }
+
+      // Add student to parent
       parent.students.push(studentUsid);
+      
+      // Save and return updated parent
+      return await this.parentRepository.save(parent);
+
+    } catch (error) {
+      if (error instanceof BadRequestException || error instanceof NotFoundException) {
+        throw error;
+      }
+      throw new InternalServerErrorException('Error while adding student to parent', {
+        cause: error,
+        description: error.message
+      });
     }
-    return await this.parentRepository.save(parent);
   }
 
   async removeStudent(parentId: number, studentUsid: string): Promise<Parent> {
