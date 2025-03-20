@@ -8,7 +8,7 @@ async function bootstrap() {
 
   // Enable CORS with all origins allowed
   app.enableCors({
-    origin: ['http://localhost:3000'], // Allow all origins using array
+    origin: ['http://localhost:3000','https://school-mgt-rho.vercel.app'], // Allow all origins using array
     methods: ['GET', 'HEAD', 'PUT','POST', 'DELETE','OPTIONS'],
     allowedHeaders: ['Content-Type', 'Accept', 'x-auth-token', 'Authorization', 'Origin', 'X-Requested-With'],
     exposedHeaders: ['Content-Range', 'X-Content-Range'],
