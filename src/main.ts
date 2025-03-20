@@ -8,7 +8,7 @@ async function bootstrap() {
 
   // Enable CORS with all origins allowed
   app.enableCors({
-    origin: ['http://localhost:3000','https://school-mgt-rho.vercel.app'], // Allow all origins using array
+    origin: ['https://school-mgt-rho.vercel.app'], // Allow all origins using array
     methods: ['GET', 'HEAD', 'PUT','POST', 'DELETE','OPTIONS'],
     credentials: true,
     maxAge: 3600, // Cache preflight requests for 1 hour
