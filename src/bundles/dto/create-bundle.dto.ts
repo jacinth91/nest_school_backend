@@ -1,6 +1,7 @@
-import { IsString, IsInt, IsNotEmpty, IsEnum, IsArray, ValidateNested } from 'class-validator';
+import { IsString, IsInt, IsNotEmpty, IsEnum, IsArray, ValidateNested, IsNumber } from 'class-validator';
 import { Type } from 'class-transformer';
 import { StudentType } from '../enums/student-type.enum';
+import { Gender } from '../entities/bundle.entity';
 
 export class CreateBundleProductDto {
   @IsInt()
@@ -15,17 +16,21 @@ export class CreateBundleProductDto {
 export class CreateBundleDto {
   @IsString()
   @IsNotEmpty()
-  className: string;
+  name: string;
 
   @IsString()
   @IsNotEmpty()
-  gender: string;
+  applicableClasses: string;
+
+  @IsEnum(Gender)
+  @IsNotEmpty()
+  gender: Gender;
 
   @IsEnum(StudentType)
   @IsNotEmpty()
   studentType: StudentType;
 
-  @IsInt()
+  @IsNumber()
   @IsNotEmpty()
   totalPrice: number;
 

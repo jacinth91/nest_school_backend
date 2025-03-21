@@ -1,17 +1,32 @@
-import { Entity, Column, PrimaryGeneratedColumn, OneToMany } from 'typeorm';
+import { Entity, PrimaryGeneratedColumn, Column, CreateDateColumn, UpdateDateColumn, OneToMany } from 'typeorm';
+import { IsString, IsNumber, IsNotEmpty, Min, MaxLength } from 'class-validator';
 import { BundleProduct } from './bundle-product.entity';
 
 @Entity('products')
 export class Product {
-  @PrimaryGeneratedColumn({ name: 'product_id' })
-  productId: number;
+  @PrimaryGeneratedColumn()
+  id: number;
 
-  @Column({ name: 'product_name', length: 255 })
-  productName: string;
+  @Column({ length: 200 })
+  @IsString()
+  @IsNotEmpty()
+  @MaxLength(200)
+  name: string;
 
-  @Column({ name: 'product_price', type: 'int' })
-  productPrice: number;
+  @Column('decimal', { precision: 10, scale: 2 ,name: 'unit_price'})
+  @IsNumber()
+  @IsNotEmpty()
+  @Min(0)
+  unitPrice: number;
 
-  @OneToMany(() => BundleProduct, (bundleProduct: BundleProduct) => bundleProduct.product)
+  @OneToMany(() => BundleProduct, (bundleProduct) => bundleProduct.product, {
+    cascade: true
+  })
   bundleProducts: BundleProduct[];
+
+  @CreateDateColumn({ name: 'created_at' })
+  createdAt: Date;
+
+  @UpdateDateColumn({ name: 'updated_at' })
+  updatedAt: Date;
 } 
