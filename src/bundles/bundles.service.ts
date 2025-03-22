@@ -11,7 +11,7 @@ import { StudentType as StudentTypeEnum } from './enums/student-type.enum';
 
 @Injectable()
 export class BundlesService {
-  private readonly validStudentTypes = ['New', 'Existing', 'Boarding'];
+  private readonly validStudentTypes = ['New', 'Existing', 'Boarding', 'Hostel'];
   private readonly genderMapping = {
     FEMALE: 'Girls',
     MALE: 'Boys'
@@ -36,27 +36,37 @@ export class BundlesService {
     });
   }
 
-  async searchBundles(usid: string, studentType: string = 'New'): Promise<Bundle[]> {
+  async searchBundles(usids: string[], studentType: string = 'New'): Promise<Bundle[]> {
     if (!this.validStudentTypes.includes(studentType)) {
       throw new BadRequestException(`Student type must be one of: ${this.validStudentTypes.join(', ')}`);
     }
 
-    // First find the student by USID
-    const student = await this.studentRepository.findOne({
-      where: { usid }
+    // Find all students by USIDs
+    const students = await this.studentRepository.find({
+      where: { usid: In(usids) }
     });
 
-    if (!student) {
-      throw new NotFoundException(`Student with USID ${usid} not found`);
+    if (students.length === 0) {
+      throw new NotFoundException(`No students found with the provided USIDs`);
     }
 
-    const mappedGender = this.genderMapping[student.gender.toUpperCase()];
-    if (!mappedGender) {
-      throw new BadRequestException(`Invalid student gender: ${student.gender}`);
+    if (students.length !== usids.length) {
+      const foundUsids = students.map(s => s.usid);
+      const notFound = usids.filter(id => !foundUsids.includes(id));
+      throw new NotFoundException(`Students not found for USIDs: ${notFound.join(', ')}`);
     }
 
-    // Get classes array from student's class
-    const classesArray = student.class.split(',').map(c => c.trim());
+    // Get unique classes and genders from all students
+    const uniqueClasses = [...new Set(students.flatMap(s => s.class.split(',').map(c => c.trim())))];
+    const uniqueGenders = [...new Set(students.map(s => this.genderMapping[s.gender.toUpperCase()]))];
+
+    // Validate all genders are valid
+    const invalidGenders = students
+      .filter(s => !this.genderMapping[s.gender.toUpperCase()])
+      .map(s => s.gender);
+    if (invalidGenders.length > 0) {
+      throw new BadRequestException(`Invalid student genders: ${invalidGenders.join(', ')}`);
+    }
 
     // Use query builder for complex search
     const bundles = await this.bundleRepository
@@ -77,18 +87,18 @@ export class BundlesService {
       ])
       .leftJoin('b.bundleProducts', 'bp')
       .leftJoin('bp.product', 'p')
-      .where('b.gender = :gender', { gender: mappedGender })
+      .where('b.gender IN (:...genders)', { genders: uniqueGenders })
       .andWhere('b.studentType = :studentType', { studentType })
-      .andWhere(new Array(classesArray.length).fill('b.applicableClasses ILIKE :class')
+      .andWhere(new Array(uniqueClasses.length).fill('b.applicableClasses ILIKE :class')
         .map((condition, index) => `(${condition}${index})`).join(' OR '),
-        classesArray.reduce((params, cls, index) => ({ 
+        uniqueClasses.reduce((params, cls, index) => ({ 
           ...params, 
           [`class${index}`]: `%${cls}%` 
         }), {}))
       .getMany();
 
     if (!bundles.length) {
-      throw new NotFoundException(`No bundles found for student with USID ${usid} and type ${studentType}`);
+      throw new NotFoundException(`No bundles found for the specified students and type ${studentType}`);
     }
 
     return bundles;
