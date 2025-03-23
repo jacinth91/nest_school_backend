@@ -14,7 +14,7 @@ import { NotificationsModule } from './notifications/notifications.module';
 import { BundlesModule } from './bundles/bundles.module';
 import { ClassCategoriesModule } from './class-categories/class-categories.module';
 import { ProfilesModule } from './profiles/profiles.module';
-
+import { CartModule } from './cart/cart.module';
 @Module({
   imports: [
     ConfigModule.forRoot(),
@@ -23,6 +23,7 @@ import { ProfilesModule } from './profiles/profiles.module';
     ParentsModule,
     ProductsModule,
     OrdersModule,
+    CartModule,
     AuthModule,
     FeedbackModule,
     NotificationsModule,
