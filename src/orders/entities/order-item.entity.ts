@@ -1,32 +1,35 @@
-import { Entity, Column, PrimaryGeneratedColumn, ManyToOne, JoinColumn } from 'typeorm';
+import { Entity, PrimaryGeneratedColumn, Column, ManyToOne, CreateDateColumn, UpdateDateColumn, JoinColumn } from 'typeorm';
 import { Order } from './order.entity';
-import { Product } from '../../products/entities/product.entity';
+import { Bundle } from '../../bundles/entities/bundle.entity';
 
 @Entity('order_items')
 export class OrderItem {
-  @PrimaryGeneratedColumn('increment')
+  @PrimaryGeneratedColumn()
   id: number;
 
-  @ManyToOne(() => Order, order => order.orderItems)
+  @ManyToOne(() => Order, order => order.items)
   @JoinColumn({ name: 'order_id' })
   order: Order;
 
   @Column({ name: 'order_id' })
   orderId: number;
 
-  @ManyToOne(() => Product)
-  @JoinColumn({ name: 'product_id' })
-  product: Product;
+  @ManyToOne(() => Bundle)
+  @JoinColumn({ name: 'bundle_id' })
+  bundle: Bundle;
 
-  @Column({ name: 'product_id' })
-  productId: number;
+  @Column({ name: 'bundle_id' })
+  bundleId: number;
 
-  @Column()
+  @Column({ name: 'quantity' })
   quantity: number;
 
-  @Column({ type: 'decimal', precision: 10, scale: 2 })
-  price: number;
+  @Column('decimal', { precision: 10, scale: 2 ,name: 'unit_price'})
+  unitPrice: number;
 
-  @Column({ type: 'decimal', precision: 10, scale: 2 })
-  subtotal: number;
+  @CreateDateColumn({name: 'created_at'})
+  createdAt: Date;
+
+  @UpdateDateColumn({name: 'updated_at'})
+  updatedAt: Date;
 } 

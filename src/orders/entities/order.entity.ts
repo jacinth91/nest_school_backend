@@ -1,14 +1,18 @@
-import { Entity, Column, PrimaryGeneratedColumn, CreateDateColumn, UpdateDateColumn, ManyToOne, OneToMany, JoinColumn } from 'typeorm';
+import { Entity, PrimaryGeneratedColumn, Column, ManyToOne, OneToMany, CreateDateColumn, UpdateDateColumn, JoinColumn } from 'typeorm';
 import { Parent } from '../../parents/entities/parent.entity';
 import { OrderItem } from './order-item.entity';
+import { Payment } from './payment.entity';
+
+export enum OrderStatus {
+  PENDING = 'pending',
+  COMPLETED = 'completed',
+  CANCELLED = 'cancelled'
+}
 
 @Entity('orders')
 export class Order {
-  @PrimaryGeneratedColumn('increment')
+  @PrimaryGeneratedColumn()
   id: number;
-
-  @Column({ name: 'order_number', unique: true })
-  orderNumber: string;
 
   @ManyToOne(() => Parent)
   @JoinColumn({ name: 'parent_id' })
@@ -17,22 +21,25 @@ export class Order {
   @Column({ name: 'parent_id' })
   parentId: number;
 
-  @Column({ type: 'decimal', precision: 10, scale: 2 })
-  totalAmount: number;
+  @Column('decimal', { precision: 10, scale: 2, name: 'total_price' })
+  totalPrice: number;
 
   @Column({
     type: 'enum',
-    enum: ['pending', 'processing', 'completed', 'cancelled'],
-    default: 'pending'
+    enum: OrderStatus,
+    default: OrderStatus.PENDING
   })
-  status: string;
+  status: OrderStatus;
 
   @OneToMany(() => OrderItem, orderItem => orderItem.order)
-  orderItems: OrderItem[];
+  items: OrderItem[];
 
-  @CreateDateColumn({ name: 'created_at' })
+  @OneToMany(() => Payment, payment => payment.order)
+  payments: Payment[];
+
+  @CreateDateColumn({name: 'created_at'})
   createdAt: Date;
 
-  @UpdateDateColumn({ name: 'updated_at' })
+  @UpdateDateColumn({name: 'updated_at'})
   updatedAt: Date;
 } 

@@ -1,11 +1,11 @@
-import { Injectable, NotFoundException, BadRequestException, ForbiddenException } from '@nestjs/common';
+import { Injectable, NotFoundException } from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
-import { Repository } from 'typeorm';
-import { Order } from './entities/order.entity';
+import { Repository, DataSource } from 'typeorm';
+import { Order, OrderStatus } from './entities/order.entity';
 import { OrderItem } from './entities/order-item.entity';
-import { CreateOrderDto } from './dto/create-order.dto';
-import { Parent } from '../parents/entities/parent.entity';
-import { Product } from '../products/entities/product.entity';
+import { Payment, PaymentMethod, PaymentStatus } from './entities/payment.entity';
+import { Cart } from '../cart/entities/cart.entity';
+import { CartItem } from '../cart/entities/cart-item.entity';
 
 @Injectable()
 export class OrdersService {
@@ -14,120 +14,89 @@ export class OrdersService {
     private readonly orderRepository: Repository<Order>,
     @InjectRepository(OrderItem)
     private readonly orderItemRepository: Repository<OrderItem>,
-    @InjectRepository(Parent)
-    private readonly parentRepository: Repository<Parent>,
-    @InjectRepository(Product)
-    private readonly productRepository: Repository<Product>,
+    @InjectRepository(Payment)
+    private readonly paymentRepository: Repository<Payment>,
+    @InjectRepository(Cart)
+    private readonly cartRepository: Repository<Cart>,
+    @InjectRepository(CartItem)
+    private readonly cartItemRepository: Repository<CartItem>,
+    private readonly dataSource: DataSource,
   ) {}
 
-  async create(createOrderDto: CreateOrderDto): Promise<Order> {
-    // Check if user is authorized
-    if (createOrderDto.userRole !== 'admin' && createOrderDto.userRole !== 'parent') {
-      throw new ForbiddenException('Only parents and admins can create orders');
-    }
+  async placeOrderFromCart(
+    parentId: number,
+    paymentMethod: PaymentMethod,
+  ): Promise<Order> {
+    const queryRunner = this.dataSource.createQueryRunner();
+    await queryRunner.connect();
+    await queryRunner.startTransaction();
 
-    // If user is a parent, verify they are creating order for themselves
-    if (createOrderDto.userRole === 'parent' && createOrderDto.userId !== createOrderDto.parentId) {
-      throw new ForbiddenException('Parents can only create orders for themselves');
-    }
-
-    // Find parent
-    const parent = await this.parentRepository.findOne({
-      where: { id: createOrderDto.parentId },
-    });
-
-    if (!parent) {
-      throw new NotFoundException(`Parent with ID ${createOrderDto.parentId} not found`);
-    }
-
-    // Create order
-    const order = this.orderRepository.create({
-      parent,
-      orderNumber: `ORD${Date.now()}`,
-      status: 'pending',
-    });
-
-    // Save order to get ID
-    const savedOrder = await this.orderRepository.save(order);
-
-    // Process order items
-    let totalAmount = 0;
-    const orderItems = [];
-
-    for (const item of createOrderDto.items) {
-      const product = await this.productRepository.findOne({
-        where: { id: item.productId },
+    try {
+      // Get parent's cart with items and bundles
+      const cart = await queryRunner.manager.findOne(Cart, {
+        where: { parentId },
+        relations: ['items', 'items.bundle']
       });
 
-      if (!product) {
-        throw new NotFoundException(`Product with ID ${item.productId} not found`);
+      if (!cart) {
+        throw new NotFoundException(`Cart not found for parent ${parentId}`);
       }
 
-      if (product.quantity < item.quantity) {
-        throw new BadRequestException(`Insufficient stock for product ${product.name}`);
+      const cartItems = await cart.items;
+      if (!cartItems || cartItems.length === 0) {
+        throw new NotFoundException('Cart is empty');
       }
 
-      const subtotal = product.price * item.quantity;
-      totalAmount += subtotal;
+      // Calculate total price from cart items
+      const totalPrice = cartItems.reduce((sum, item) => 
+        sum + (item.bundle.totalPrice * item.quantity), 0
+      );
 
-      const orderItem = this.orderItemRepository.create({
-        order: savedOrder,
-        product,
-        quantity: item.quantity,
-        price: product.price,
-        subtotal,
+      // Create order
+      const order = queryRunner.manager.create(Order, {
+        parentId,
+        totalPrice,
+        status: OrderStatus.PENDING
+      });
+      const savedOrder = await queryRunner.manager.save(Order, order);
+
+      // Transform cart items to order items
+      for (const cartItem of cartItems) {
+        const orderItem = queryRunner.manager.create(OrderItem, {
+          orderId: savedOrder.id,
+          bundleId: cartItem.bundleId,
+          quantity: cartItem.quantity,
+          unitPrice: cartItem.bundle.totalPrice
+        });
+        await queryRunner.manager.save(OrderItem, orderItem);
+      }
+
+      // Create payment
+      const payment = queryRunner.manager.create(Payment, {
+        orderId: savedOrder.id,
+        amount: totalPrice,
+        paymentMethod,
+        paymentStatus: PaymentStatus.PENDING
+      });
+      await queryRunner.manager.save(Payment, payment);
+
+      // Clear the cart
+      await queryRunner.manager.delete(CartItem, { cartId: cart.id });
+
+      // Get complete order with relations
+      const completeOrder = await queryRunner.manager.findOne(Order, {
+        where: { id: savedOrder.id },
+        relations: ['items', 'items.bundle', 'payments']
       });
 
-      orderItems.push(orderItem);
+      await queryRunner.commitTransaction();
+      return completeOrder;
 
-      // Update product quantity
-      product.quantity -= item.quantity;
-      await this.productRepository.save(product);
+    } catch (error) {
+      await queryRunner.rollbackTransaction();
+      throw error;
+    } finally {
+      await queryRunner.release();
     }
-
-    // Save order items
-    await this.orderItemRepository.save(orderItems);
-
-    // Update order total
-    savedOrder.totalAmount = totalAmount;
-    return await this.orderRepository.save(savedOrder);
-  }
-
-  async findAll(): Promise<Order[]> {
-    return await this.orderRepository.find({
-      relations: ['parent', 'orderItems', 'orderItems.product'],
-      order: {
-        createdAt: 'DESC',
-      },
-    });
-  }
-
-  async findOne(id: number): Promise<Order> {
-    const order = await this.orderRepository.findOne({
-      where: { id },
-      relations: ['parent', 'orderItems', 'orderItems.product'],
-    });
-
-    if (!order) {
-      throw new NotFoundException(`Order with ID ${id} not found`);
-    }
-
-    return order;
-  }
-
-  async findByParent(parentId: number): Promise<Order[]> {
-    return await this.orderRepository.find({
-      where: { parentId },
-      relations: ['orderItems', 'orderItems.product'],
-      order: {
-        createdAt: 'DESC',
-      },
-    });
-  }
-
-  async updateStatus(id: number, status: string): Promise<Order> {
-    const order = await this.findOne(id);
-    order.status = status;
-    return await this.orderRepository.save(order);
   }
 } 
