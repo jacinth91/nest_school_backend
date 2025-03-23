@@ -6,6 +6,9 @@ import { CartItem } from './cart-item.entity';
 export class Cart {
   @PrimaryGeneratedColumn()
   id: number;
+  
+  @Column({ name: 'usid', type: 'text' })
+  usid: string;
 
   @ManyToOne(() => Parent)
   @JoinColumn({ name: 'parent_id' })

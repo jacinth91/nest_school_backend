@@ -1,11 +1,11 @@
-import { Controller, Post, Get, Body, UseGuards, BadRequestException } from '@nestjs/common';
+import { Controller, Post, Get, Body, UseGuards, BadRequestException, Param } from '@nestjs/common';
 import { ApiTags, ApiOperation, ApiResponse } from '@nestjs/swagger';
 import { CartService } from './cart.service';
 import { Cart } from './entities/cart.entity';
 import { JwtAuthGuard } from '../auth/guards/jwt-auth.guard';
 import { RolesGuard } from '../auth/guards/roles.guard';
 import { Roles } from '../auth/decorators/roles.decorator';
-import { User } from '../auth/decorators/user.decorator';
+import { GetUsid } from '../decorators/get-usid.decorator';
 
 class AddBundleDto {
   bundleId: number;
@@ -38,11 +38,11 @@ export class CartController {
     );
   }
 
-  @Get()
+  @Get(':parentId')
   //@Roles('parent')
-  @ApiOperation({ summary: 'Get current cart' })
-  @ApiResponse({ status: 200, description: 'Returns the current cart', type: Cart })
-  async getCart(@User() user: { id: number }): Promise<Cart> {
-    return await this.cartService.getCart(user.id);
+  @ApiOperation({ summary: 'Get cart by parent ID' })
+  @ApiResponse({ status: 200, description: 'Returns the cart for the specified parent', type: Cart })
+  async getCart(@Param('parentId') parentId: number): Promise<Cart> {
+    return await this.cartService.getCart(parentId);
   }
 } 

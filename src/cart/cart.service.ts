@@ -41,7 +41,7 @@ export class CartService {
 
       if (!cart) {
         // Create new cart
-        cart = queryRunner.manager.create(Cart, { parentId });
+        cart = queryRunner.manager.create(Cart, { parentId: parentId});
         cart = await queryRunner.manager.save(Cart, cart);
 
         // Create initial cart item
