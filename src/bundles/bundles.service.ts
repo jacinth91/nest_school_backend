@@ -58,7 +58,7 @@ export class BundlesService {
     if (!data || data.length === 0) {
       throw new NotFoundException('No bundle data found');
     }
-
+    console.log(data);
     return {
       bundle_id: data[0].bundle_id,
       bundle_name: data[0].bundle_name,
@@ -67,6 +67,7 @@ export class BundlesService {
       class_name: data[0].class_name,
       bundle_total: parseFloat(data[0].bundle_total),
       products: data.map(item => ({
+        product_id: item.product_id,
         product_name: item.product_name,
         unit_price: parseFloat(item.unit_price),
         quantity: parseInt(item.quantity),
@@ -115,6 +116,7 @@ export class BundlesService {
           WHEN b.applicableClasses ~* :classPattern THEN '${displayClassName}'
           ELSE 'Unknown'
         END as class_name`,
+        'p.id as product_id',
         'p.name as product_name',
         'p.unitPrice as unit_price',
         'bp.quantity as quantity',

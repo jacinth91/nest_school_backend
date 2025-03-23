@@ -1,6 +1,9 @@
 import { ApiProperty } from '@nestjs/swagger';
 
 export class BundleProductDto {
+  @ApiProperty({ description: 'ID of the product' })
+  product_id: number;
+
   @ApiProperty({ description: 'Name of the product' })
   product_name: string;
 
