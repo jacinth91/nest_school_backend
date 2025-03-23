@@ -17,8 +17,8 @@ export class Cart {
   @Column({ name: 'parent_id' })
   parentId: number;
 
-  @OneToMany('CartItem', 'cart', { cascade: true })
-  items: Promise<CartItem[]>;
+  @OneToMany(() => CartItem, cartItem => cartItem.cart, { eager: true })
+  items: CartItem[];
 
   @CreateDateColumn({ name: 'created_at' })
   createdAt: Date;

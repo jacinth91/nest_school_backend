@@ -25,10 +25,9 @@ export class CartService {
     try {
       // Check if bundle exists first
       const bundle = await queryRunner.manager.findOne(Bundle, {
-        where: { id: bundleId },
-       
+        where: { id: bundleId }
       });
-      console.log(bundle,'^^^');
+
       if (!bundle) {
         throw new NotFoundException(`Bundle with ID ${bundleId} not found`);
       }
@@ -41,7 +40,7 @@ export class CartService {
 
       if (!cart) {
         // Create new cart
-        cart = queryRunner.manager.create(Cart, { parentId: parentId});
+        cart = queryRunner.manager.create(Cart, { parentId });
         cart = await queryRunner.manager.save(Cart, cart);
 
         // Create initial cart item
@@ -103,6 +102,52 @@ export class CartService {
       throw new NotFoundException(`Cart not found for parent ${parentId}`);
     }
 
+    // Ensure items are loaded
+    await cart.items;
     return cart;
+  }
+
+  async removeFromCart(parentId: number, bundleId: number): Promise<Cart> {
+    const queryRunner = this.dataSource.createQueryRunner();
+    await queryRunner.connect();
+    await queryRunner.startTransaction();
+
+    try {
+      // Get cart with items
+      const cart = await queryRunner.manager.findOne(Cart, {
+        where: { parentId },
+        relations: ['items']
+      });
+      console.log(cart.items,'cart');
+      if (!cart) {
+        throw new NotFoundException(`Cart not found for parent ${parentId}`);
+      }
+
+      // Get cart items
+      const items = await cart.items;
+      const cartItem = items?.find(item => item.bundleId == bundleId);
+
+      if (!cartItem) {
+        throw new NotFoundException(`Bundle with ID ${bundleId} not found in cart`);
+      }
+
+      // Delete the cart item
+      await queryRunner.manager.delete(CartItem, { id: cartItem.id });
+
+      // Get updated cart
+      const updatedCart = await queryRunner.manager.findOne(Cart, {
+        where: { id: cart.id },
+        relations: ['items', 'items.bundle']
+      });
+
+      await queryRunner.commitTransaction();
+      return updatedCart;
+
+    } catch (error) {
+      await queryRunner.rollbackTransaction();
+      throw error;
+    } finally {
+      await queryRunner.release();
+    }
   }
 } 

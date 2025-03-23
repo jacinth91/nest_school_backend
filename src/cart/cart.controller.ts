@@ -1,4 +1,4 @@
-import { Controller, Post, Get, Body, UseGuards, BadRequestException, Param } from '@nestjs/common';
+import { Controller, Post, Get, Delete, Body, UseGuards, BadRequestException, Param } from '@nestjs/common';
 import { ApiTags, ApiOperation, ApiResponse } from '@nestjs/swagger';
 import { CartService } from './cart.service';
 import { Cart } from './entities/cart.entity';
@@ -25,7 +25,6 @@ export class CartController {
   @ApiResponse({ status: 201, description: 'Bundle added to cart successfully', type: Cart })
   async addBundleToCart(
     @Body() addBundleDto: AddBundleDto,
-    
   ): Promise<Cart> {
     if (!addBundleDto.bundleId) {
       throw new BadRequestException('Bundle ID is required');
@@ -44,5 +43,16 @@ export class CartController {
   @ApiResponse({ status: 200, description: 'Returns the cart for the specified parent', type: Cart })
   async getCart(@Param('parentId') parentId: number): Promise<Cart> {
     return await this.cartService.getCart(parentId);
+  }
+
+  @Delete(':parentId/bundles/:bundleId')
+  //@Roles('parent')
+  @ApiOperation({ summary: 'Remove bundle from cart' })
+  @ApiResponse({ status: 200, description: 'Bundle removed from cart successfully', type: Cart })
+  async removeFromCart(
+    @Param('parentId') parentId: number,
+    @Param('bundleId') bundleId: number,
+  ): Promise<Cart> {
+    return await this.cartService.removeFromCart(parentId, bundleId);
   }
 } 
