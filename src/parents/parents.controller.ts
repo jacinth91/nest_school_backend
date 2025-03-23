@@ -1,7 +1,8 @@
-import { Controller, Get, Post, Body, Param, Delete, Put } from '@nestjs/common';
+import { Controller, Get, Post, Body, Param, Delete, Put, Req } from '@nestjs/common';
 import { ParentsService } from './parents.service';
 import { CreateParentDto } from './dto/create-parent.dto';
 import { Parent } from './entities/parent.entity';
+import { Request } from 'express';
 
 @Controller('parents')
 export class ParentsController {
@@ -9,9 +10,9 @@ export class ParentsController {
     private readonly parentsService: ParentsService,
   ) {}
 
-  @Get('me/:usid')
-  async getCurrentParent(@Param('usid') usid: string): Promise<Parent> {
-    return this.parentsService.findByStudentUsid(usid);
+  @Get('me')
+  async getCurrentParent(@Req() request: Request): Promise<Parent> {
+    return this.parentsService.findByStudentUsid(request.usid);
   }
 
   @Post()

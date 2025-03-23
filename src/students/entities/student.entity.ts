@@ -15,8 +15,8 @@ export class Student {
   @Column({ name: 'student_name' })
   studentName: string;
 
-  @Column({ name: 'father_name' })
-  fatherName: string;
+  // @Column({ name: 'father_name' })
+  // fatherName: string;
 
   @Column()
   gender: string;

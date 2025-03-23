@@ -17,6 +17,23 @@ export class BundlesService {
     MALE: 'Boys'
   };
 
+  // Class mapping for display
+  private readonly classMapping = {
+    'PP2': 'PP2',
+    'I': '1st',
+    'II': '2nd',
+    'III': '3rd',
+    'IV': '4th',
+    'V': '5th',
+    'VI': '6th',
+    'VII': '7th',
+    'VIII': '8th',
+    'IX': '9th',
+    'X': '10th',
+    'XI': '11th',
+    'XII': '12th'
+  };
+
   constructor(
     @InjectRepository(Bundle)
     private readonly bundleRepository: Repository<Bundle>,
@@ -36,69 +53,60 @@ export class BundlesService {
     });
   }
 
-  async searchBundles(usids: string[], studentType: string = 'New'): Promise<Bundle[]> {
+  async searchBundles(usid: string): Promise<any[]> {
+    let studentType: string = 'New';
     if (!this.validStudentTypes.includes(studentType)) {
       throw new BadRequestException(`Student type must be one of: ${this.validStudentTypes.join(', ')}`);
     }
 
-    // Find all students by USIDs
-    const students = await this.studentRepository.find({
-      where: { usid: In(usids) }
+    // Find student by USID
+    const student = await this.studentRepository.findOne({
+      where: { usid }
     });
 
-    if (students.length === 0) {
-      throw new NotFoundException(`No students found with the provided USIDs`);
+    if (!student) {
+      throw new NotFoundException(`Student with USID ${usid} not found`);
     }
 
-    if (students.length !== usids.length) {
-      const foundUsids = students.map(s => s.usid);
-      const notFound = usids.filter(id => !foundUsids.includes(id));
-      throw new NotFoundException(`Students not found for USIDs: ${notFound.join(', ')}`);
+    // Get gender mapping
+    const mappedGender = this.genderMapping[student.gender.toUpperCase()];
+    if (!mappedGender) {
+      throw new BadRequestException(`Invalid student gender: ${student.gender}`);
     }
 
-    // Get unique classes and genders from all students
-    const uniqueClasses = [...new Set(students.flatMap(s => s.class.split(',').map(c => c.trim())))];
-    const uniqueGenders = [...new Set(students.map(s => this.genderMapping[s.gender.toUpperCase()]))];
+    // Get student's class (take first class if multiple are present)
+    const studentClass = student.class.split(',')[0].trim();
+    const displayClassName = this.classMapping[studentClass] || studentClass;
 
-    // Validate all genders are valid
-    const invalidGenders = students
-      .filter(s => !this.genderMapping[s.gender.toUpperCase()])
-      .map(s => s.gender);
-    if (invalidGenders.length > 0) {
-      throw new BadRequestException(`Invalid student genders: ${invalidGenders.join(', ')}`);
-    }
+    // Create regex pattern for exact class matching
+    const classPattern = `(^|,\\s*)${studentClass}($|,)`;
 
-    // Use query builder for complex search
+    // Use query builder for search with CASE statement
     const bundles = await this.bundleRepository
       .createQueryBuilder('b')
       .select([
-        'b.id',
-        'b.name',
-        'b.gender',
-        'b.studentType',
-        'b.applicableClasses',
-        'b.totalPrice',
-        'bp.id',
+        'b.name as bundle_name',
+        'b.gender as gender',
+        'b.applicableClasses as applicable_classes',
+        `CASE 
+          WHEN b.applicableClasses ~* :classPattern THEN '${displayClassName}'
+          ELSE 'Unknown'
+        END as class_name`,
+        'p.name as product_name',
+        'p.unitPrice as unit_price',
         'bp.quantity',
         'bp.optional',
-        'p.id',
-        'p.name',
-        'p.unitPrice'
+        'b.totalPrice as bundle_total'
       ])
-      .leftJoin('b.bundleProducts', 'bp')
-      .leftJoin('bp.product', 'p')
-      .where('b.gender IN (:...genders)', { genders: uniqueGenders })
+      .innerJoin('b.bundleProducts', 'bp')
+      .innerJoin('bp.product', 'p')
+      .where('b.gender = :gender', { gender: mappedGender })
       .andWhere('b.studentType = :studentType', { studentType })
-      .andWhere(new Array(uniqueClasses.length).fill('b.applicableClasses ILIKE :class')
-        .map((condition, index) => `(${condition}${index})`).join(' OR '),
-        uniqueClasses.reduce((params, cls, index) => ({ 
-          ...params, 
-          [`class${index}`]: `%${cls}%` 
-        }), {}))
-      .getMany();
+      .andWhere('b.applicableClasses ~* :classPattern', { classPattern })
+      .getRawMany();
 
     if (!bundles.length) {
-      throw new NotFoundException(`No bundles found for the specified students and type ${studentType}`);
+      throw new NotFoundException(`No bundles found for student with USID ${usid} and class ${displayClassName}`);
     }
 
     return bundles;
