@@ -8,6 +8,7 @@ import { CreateBundleDto } from './dto/create-bundle.dto';
 import { Student } from '../students/entities/student.entity';
 import { ClassCategory } from '../class-categories/entities/class-category.entity';
 import { StudentType as StudentTypeEnum } from './enums/student-type.enum';
+import { BundleResponseDto } from './dto/bundle-response.dto';
 
 @Injectable()
 export class BundlesService {
@@ -53,7 +54,27 @@ export class BundlesService {
     });
   }
 
-  async searchBundles(usid: string): Promise<any[]> {
+  private transformToResponseDto(data: any[]): BundleResponseDto {
+    if (!data || data.length === 0) {
+      throw new NotFoundException('No bundle data found');
+    }
+
+    return {
+      bundle_name: data[0].bundle_name,
+      gender: data[0].gender,
+      applicable_classes: data[0].applicable_classes,
+      class_name: data[0].class_name,
+      bundle_total: parseFloat(data[0].bundle_total),
+      products: data.map(item => ({
+        product_name: item.product_name,
+        unit_price: parseFloat(item.unit_price),
+        quantity: parseInt(item.quantity),
+        optional: item.optional
+      }))
+    };
+  }
+
+  async searchBundles(usid: string): Promise<BundleResponseDto> {
     let studentType: string = 'New';
     if (!this.validStudentTypes.includes(studentType)) {
       throw new BadRequestException(`Student type must be one of: ${this.validStudentTypes.join(', ')}`);
@@ -94,8 +115,8 @@ export class BundlesService {
         END as class_name`,
         'p.name as product_name',
         'p.unitPrice as unit_price',
-        'bp.quantity',
-        'bp.optional',
+        'bp.quantity as quantity',
+        'bp.optional as optional',
         'b.totalPrice as bundle_total'
       ])
       .innerJoin('b.bundleProducts', 'bp')
@@ -109,10 +130,10 @@ export class BundlesService {
       throw new NotFoundException(`No bundles found for student with USID ${usid} and class ${displayClassName}`);
     }
 
-    return bundles;
+    return this.transformToResponseDto(bundles);
   }
 
-  async getBundlesByStudentDetails(usid: string): Promise<Bundle[]> {
+  async getBundlesByStudentDetails(usid: string): Promise<BundleResponseDto> {
     // Find student by USID
     const student = await this.studentRepository.findOne({
       where: { usid }
@@ -128,18 +149,29 @@ export class BundlesService {
     }
 
     // Find matching bundles based on student's class and gender
-    const bundles = await this.bundleRepository.find({
-      where: {
-        applicableClasses: student.class,
-        gender: mappedGender
-      },
-      relations: ['bundleProducts', 'bundleProducts.product']
-    });
+    const bundles = await this.bundleRepository
+      .createQueryBuilder('b')
+      .select([
+        'b.name as bundle_name',
+        'b.gender as gender',
+        'b.applicableClasses as applicable_classes',
+        'b.applicableClasses as class_name',
+        'p.name as product_name',
+        'p.unitPrice as unit_price',
+        'bp.quantity as quantity',
+        'bp.optional as optional',
+        'b.totalPrice as bundle_total'
+      ])
+      .innerJoin('b.bundleProducts', 'bp')
+      .innerJoin('bp.product', 'p')
+      .where('b.gender = :gender', { gender: mappedGender })
+      .andWhere('b.applicableClasses = :class', { class: student.class })
+      .getRawMany();
 
     if (!bundles.length) {
       throw new NotFoundException(`No bundles found for student with USID ${usid}`);
     }
 
-    return bundles;
+    return this.transformToResponseDto(bundles);
   }
 }

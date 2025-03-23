@@ -1,6 +1,13 @@
-import { Entity, Column, PrimaryGeneratedColumn, CreateDateColumn, UpdateDateColumn, ManyToOne, JoinColumn } from 'typeorm';
-import { Parent } from '../../parents/entities/parent.entity';
+import { Entity, Column, PrimaryGeneratedColumn, CreateDateColumn, UpdateDateColumn } from 'typeorm';
 import { ApiProperty } from '@nestjs/swagger';
+
+export enum QueryType {
+  ACADEMIC = 'academic',
+  ADMINISTRATIVE = 'administrative',
+  FINANCIAL = 'financial',
+  TECHNICAL = 'technical',
+  OTHER = 'other'
+}
 
 @Entity('feedback')
 export class Feedback {
@@ -8,22 +15,34 @@ export class Feedback {
   @PrimaryGeneratedColumn('increment')
   id: number;
 
-  @ApiProperty({ description: 'ID of the parent who submitted the feedback' })
-  @ManyToOne(() => Parent)
-  @JoinColumn({ name: 'parent_id' })
-  parent: Parent;
+  @ApiProperty({ description: 'Name of the parent submitting feedback' })
+  @Column({ name: 'parent_name' })
+  parentName: string;
 
-  @ApiProperty({ description: 'ID of the parent who submitted the feedback' })
-  @Column({ name: 'parent_id' })
-  parentId: number;
+  @ApiProperty({ 
+    description: 'Type of query/feedback',
+    enum: QueryType,
+    enumName: 'QueryType'
+  })
+  @Column({
+    name: 'query_type',
+    type: 'enum',
+    enum: QueryType,
+    default: QueryType.OTHER
+  })
+  queryType: QueryType;
 
-  @ApiProperty({ description: 'Title of the feedback' })
-  @Column()
-  title: string;
+  @ApiProperty({ description: 'Student enrollment ID' })
+  @Column({ name: 'student_enroll_id' })
+  studentEnrollId: string;
 
-  @ApiProperty({ description: 'Content of the feedback' })
-  @Column('text')
-  content: string;
+  @ApiProperty({ description: 'Detailed description of the feedback/query' })
+  @Column('text', { name: 'description' })
+  description: string;
+
+  @ApiProperty({ description: 'File attachment URL', nullable: true })
+  @Column({ name: 'file_attachment', nullable: true })
+  fileAttachment: string;
 
   @ApiProperty({ description: 'Status of the feedback' })
   @Column({

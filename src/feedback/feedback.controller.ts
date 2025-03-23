@@ -2,7 +2,7 @@ import { Controller, Get, Post, Body, Param, Put, ParseIntPipe, UseGuards, Forbi
 import { ApiTags, ApiOperation, ApiResponse } from '@nestjs/swagger';
 import { FeedbackService } from './feedback.service';
 import { CreateFeedbackDto } from './dto/create-feedback.dto';
-import { Feedback } from './entities/feedback.entity';
+import { FeedbackResponseDto } from './dto/feedback-response.dto';
 import { JwtAuthGuard } from '../auth/guards/jwt-auth.guard';
 import { RolesGuard } from '../auth/guards/roles.guard';
 import { Roles } from '../auth/decorators/roles.decorator';
@@ -17,67 +17,67 @@ export class FeedbackController {
   @Post()
   @Roles('parent')
   @ApiOperation({ summary: 'Create new feedback' })
-  @ApiResponse({ status: 201, description: 'Feedback created successfully', type: Feedback })
+  @ApiResponse({ status: 201, description: 'Feedback created successfully', type: FeedbackResponseDto })
   async create(
     @Body() createFeedbackDto: CreateFeedbackDto,
-    @User() user: { id: number }
-  ): Promise<Feedback> {
-    createFeedbackDto.parentId = user.id;
+    @User() user: { id: number; name: string }
+  ): Promise<FeedbackResponseDto> {
+    createFeedbackDto.parentName = user.name;
     return await this.feedbackService.create(createFeedbackDto);
   }
 
   @Get()
   @Roles('admin')
   @ApiOperation({ summary: 'Get all feedback' })
-  @ApiResponse({ status: 200, description: 'List of all feedback', type: [Feedback] })
-  async findAll(): Promise<Feedback[]> {
+  @ApiResponse({ status: 200, description: 'List of all feedback', type: [FeedbackResponseDto] })
+  async findAll(): Promise<FeedbackResponseDto[]> {
     return await this.feedbackService.findAll();
   }
 
   @Get(':id')
   @Roles('admin', 'parent')
   @ApiOperation({ summary: 'Get feedback by ID' })
-  @ApiResponse({ status: 200, description: 'Feedback found', type: Feedback })
+  @ApiResponse({ status: 200, description: 'Feedback found', type: FeedbackResponseDto })
   @ApiResponse({ status: 404, description: 'Feedback not found' })
   async findOne(
     @Param('id', ParseIntPipe) id: number,
-    @User() user: { id: number; role: string }
-  ): Promise<Feedback> {
+    @User() user: { id: number; role: string; name: string }
+  ): Promise<FeedbackResponseDto> {
     const feedback = await this.feedbackService.findOne(id);
     
     // Parents can only view their own feedback
-    if (user.role === 'parent' && feedback.parentId !== user.id) {
+    if (user.role === 'parent' && feedback.parent_name !== user.name) {
       throw new ForbiddenException('You can only view your own feedback');
     }
     
     return feedback;
   }
 
-  @Get('parent/:parentId')
+  @Get('parent/:name')
   @Roles('admin', 'parent')
-  @ApiOperation({ summary: 'Get feedback by parent ID' })
-  @ApiResponse({ status: 200, description: 'List of feedback for parent', type: [Feedback] })
+  @ApiOperation({ summary: 'Get feedback by parent name' })
+  @ApiResponse({ status: 200, description: 'List of feedback for parent', type: [FeedbackResponseDto] })
   async findByParent(
-    @Param('parentId', ParseIntPipe) parentId: number,
-    @User() user: { id: number; role: string }
-  ): Promise<Feedback[]> {
+    @Param('name') name: string,
+    @User() user: { id: number; role: string; name: string }
+  ): Promise<FeedbackResponseDto[]> {
     // Parents can only view their own feedback
-    if (user.role === 'parent' && parentId !== user.id) {
+    if (user.role === 'parent' && name !== user.name) {
       throw new ForbiddenException('You can only view your own feedback');
     }
     
-    return await this.feedbackService.findByParent(parentId);
+    return await this.feedbackService.findByParentName(name);
   }
 
   @Put(':id/status')
   @Roles('admin')
   @ApiOperation({ summary: 'Update feedback status' })
-  @ApiResponse({ status: 200, description: 'Status updated successfully', type: Feedback })
+  @ApiResponse({ status: 200, description: 'Status updated successfully', type: FeedbackResponseDto })
   @ApiResponse({ status: 404, description: 'Feedback not found' })
   async updateStatus(
     @Param('id', ParseIntPipe) id: number,
     @Body('status') status: string,
-  ): Promise<Feedback> {
+  ): Promise<FeedbackResponseDto> {
     return await this.feedbackService.updateStatus(id, status);
   }
 } 
