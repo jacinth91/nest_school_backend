@@ -60,6 +60,7 @@ export class BundlesService {
     }
 
     return {
+      bundle_id: data[0].bundle_id,
       bundle_name: data[0].bundle_name,
       gender: data[0].gender,
       applicable_classes: data[0].applicable_classes,
@@ -106,6 +107,7 @@ export class BundlesService {
     const bundles = await this.bundleRepository
       .createQueryBuilder('b')
       .select([
+        'b.id as bundle_id',
         'b.name as bundle_name',
         'b.gender as gender',
         'b.applicableClasses as applicable_classes',
