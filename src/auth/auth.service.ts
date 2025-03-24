@@ -1,4 +1,4 @@
-import { Injectable, UnauthorizedException, BadRequestException, InternalServerErrorException } from '@nestjs/common';
+import { Injectable, UnauthorizedException, BadRequestException, InternalServerErrorException, NotFoundException } from '@nestjs/common';
 import { JwtService } from '@nestjs/jwt';
 import { InjectRepository } from '@nestjs/typeorm';
 import { Repository } from 'typeorm';
@@ -15,7 +15,7 @@ export class AuthService {
     @InjectRepository(Student)
     private readonly studentRepository: Repository<Student>,
     private readonly jwtService: JwtService,
-  ) {}
+  ) { }
 
   async login(loginDto: LoginDto) {
     if (!loginDto.usid || !loginDto.password) {
@@ -30,23 +30,24 @@ export class AuthService {
         .getOne();
 
       if (!parent) {
-        return {
-          success: false,
-          message: 'Student USID not found in any parent records',
-          exists: false,
-          status: 401
-        };
+        throw new NotFoundException(`Parent not found`, {
+
+          cause: new Error('Parent not found'),
+          description: 'Parent not found'
+
+        })
       }
 
       // Verify password
       const isPasswordValid = await bcrypt.compare(loginDto.password, parent.password);
       if (!isPasswordValid) {
-        return {
-          success: false,
-          message: 'Invalid password',
-          exists: true,
-          status: 401
-        };
+
+        throw new NotFoundException(`Invalid password`, {
+
+          cause: new Error('Invalid password'),
+          description: 'Invalid password'
+
+        })
       }
 
       // Fetch data only for the logging-in student
@@ -60,12 +61,12 @@ export class AuthService {
       }
 
       // Generate JWT token
-      const payload = { 
-        sub: loginDto.usid, 
+      const payload = {
+        sub: loginDto.usid,
         role: parent.role,
-        parentId: parent.id 
+        parentId: parent.id
       };
-      
+
       const token = this.jwtService.sign(payload);
 
       // Return success with parent data and specific student data
@@ -73,7 +74,7 @@ export class AuthService {
         success: true,
         message: 'Login successful',
         exists: true,
-        name:parent.parentName,
+        name: parent.parentName,
         student: student,
         access_token: token
       };
