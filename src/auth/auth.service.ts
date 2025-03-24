@@ -33,7 +33,8 @@ export class AuthService {
         return {
           success: false,
           message: 'Student USID not found in any parent records',
-          exists: false
+          exists: false,
+          status: 401
         };
       }
 
@@ -43,7 +44,8 @@ export class AuthService {
         return {
           success: false,
           message: 'Invalid password',
-          exists: true
+          exists: true,
+          status: 401
         };
       }
 
