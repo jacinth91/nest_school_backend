@@ -9,6 +9,9 @@ export class Parent {
   @Column({ name: 'parent_name' })
   parentName: string;
 
+  @Column({ name: 'phonenumber' })
+  phoneNumber: string;
+
   @Column('text', { array: true, name: 'students', nullable: true })
   students: string[];
 
