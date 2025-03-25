@@ -17,15 +17,15 @@ export const GetUsid = createParamDecorator(
       throw new UnauthorizedException('Authorization header is missing');
     }
 
-    // Extract token
-    const token = authHeader.split(' ')[1];
-    if (!token) {
-      throw new UnauthorizedException('Invalid authorization header format');
-    }
+    // // Extract token
+    // const token = authHeader.split(' ')[1];
+    // if (!token) {
+    //   throw new UnauthorizedException('Invalid authorization header format');
+    // }
 
     try {
       // Decode JWT token
-      const decoded = jwt.verify(token, process.env.JWT_SECRET) as JwtPayload;
+      const decoded = jwt.verify(authHeader, process.env.JWT_SECRET) as JwtPayload;
       
       if (!decoded.usid) {
         throw new UnauthorizedException('Invalid token: USID not found');
