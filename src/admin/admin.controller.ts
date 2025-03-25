@@ -1,9 +1,22 @@
-import { Controller, Get, Post, Body, Patch, Param, Delete } from '@nestjs/common';
-import { ApiTags, ApiOperation, ApiResponse } from '@nestjs/swagger';
+import { Controller, Get, Post, Body, Patch, Param, Delete, UseGuards, Req } from '@nestjs/common';
+import { ApiTags, ApiOperation, ApiResponse, ApiBearerAuth } from '@nestjs/swagger';
 import { AdminService } from './admin.service';
 import { CreateAdminDto } from './dto/create-admin.dto';
 import { UpdateAdminDto } from './dto/update-admin.dto';
 import { AdminLoginDto } from './dto/admin-login.dto';
+import { LoadUserDto } from './dto/load-user.dto';
+import { JwtAuthGuard } from '../auth/guards/jwt-auth.guard';
+import { RolesGuard } from '../auth/guards/roles.guard';
+import { Roles } from '../auth/decorators/roles.decorator';
+import { Request } from 'express';
+
+interface RequestWithUser extends Request {
+  user: {
+    email: string;
+    sub: string;
+    role: string;
+  };
+}
 
 @ApiTags('admins')
 @Controller('admins')
@@ -16,6 +29,16 @@ export class AdminController {
   @ApiResponse({ status: 401, description: 'Invalid credentials' })
   login(@Body() adminLoginDto: AdminLoginDto) {
     return this.adminService.login(adminLoginDto);
+  }
+
+  @Post('load-user')
+  //@UseGuards(JwtAuthGuard)
+  //@ApiBearerAuth()
+  @ApiOperation({ summary: 'Load admin user details' })
+  @ApiResponse({ status: 200, description: 'User loaded successfully' })
+  @ApiResponse({ status: 404, description: 'Admin not found' })
+  loadUser(@Req() req: RequestWithUser) {
+    return this.adminService.loadUser(req.user.email);
   }
 
   @Post()

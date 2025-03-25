@@ -5,6 +5,8 @@ import { Admin } from './entities/admin.entity';
 import { CreateAdminDto } from './dto/create-admin.dto';
 import { UpdateAdminDto } from './dto/update-admin.dto';
 import { AdminLoginDto } from './dto/admin-login.dto';
+import { LoadUserDto } from './dto/load-user.dto';
+import { JwtService } from '@nestjs/jwt';
 import * as bcrypt from 'bcrypt';
 
 @Injectable()
@@ -12,7 +14,25 @@ export class AdminService {
   constructor(
     @InjectRepository(Admin)
     private readonly adminRepository: Repository<Admin>,
+    private readonly jwtService: JwtService,
   ) {}
+
+  async loadUser(email: string) {
+    const admin = await this.adminRepository.findOne({
+      where: { email },
+      select: ['id', 'name', 'email', 'role', 'phoneNumber'] // Exclude password
+    });
+
+    if (!admin) {
+      throw new NotFoundException('User not found');
+    }
+
+    return {
+      success: true,
+      message: 'User loaded successfully',
+      admin
+    };
+  }
 
   async login(adminLoginDto: AdminLoginDto) {
     const admin = await this.adminRepository.findOne({
@@ -28,9 +48,20 @@ export class AdminService {
       throw new UnauthorizedException('Invalid email or password');
     }
 
+    // Create JWT payload with encoded email
+    const payload = {
+      sub: admin.id,
+      email: admin.email, // Encode email in base64
+      role: admin.role
+    };
+
+    // Generate JWT token
+    const token = this.jwtService.sign(payload);
+
     return {
       success: true,
       message: 'Login successful',
+      access_token: token,
       admin: {
         id: admin.id,
         name: admin.name,
