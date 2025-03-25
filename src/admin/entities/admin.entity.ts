@@ -14,15 +14,15 @@ export class Admin {
   @Column({ default: 'admin' })
   role: string;
 
-  @Column()
+  @Column({name: 'phone_number'})
   phoneNumber: string;
 
   @Column()
   password: string;
 
-  @CreateDateColumn()
+  @CreateDateColumn({name: 'created_at'})
   createdAt: Date;
 
-  @UpdateDateColumn()
+  @UpdateDateColumn({name: 'updated_at'}  )
   updatedAt: Date;
 } 

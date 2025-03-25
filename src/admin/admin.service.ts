@@ -1,9 +1,10 @@
-import { Injectable, NotFoundException, ConflictException } from '@nestjs/common';
+import { Injectable, NotFoundException, ConflictException, UnauthorizedException } from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
 import { Repository } from 'typeorm';
 import { Admin } from './entities/admin.entity';
 import { CreateAdminDto } from './dto/create-admin.dto';
 import { UpdateAdminDto } from './dto/update-admin.dto';
+import { AdminLoginDto } from './dto/admin-login.dto';
 import * as bcrypt from 'bcrypt';
 
 @Injectable()
@@ -12,6 +13,33 @@ export class AdminService {
     @InjectRepository(Admin)
     private readonly adminRepository: Repository<Admin>,
   ) {}
+
+  async login(adminLoginDto: AdminLoginDto) {
+    const admin = await this.adminRepository.findOne({
+      where: { email: adminLoginDto.email }
+    });
+
+    if (!admin) {
+      throw new UnauthorizedException('Invalid email or password');
+    }
+
+    const isPasswordValid = await bcrypt.compare(adminLoginDto.password, admin.password);
+    if (!isPasswordValid) {
+      throw new UnauthorizedException('Invalid email or password');
+    }
+
+    return {
+      success: true,
+      message: 'Login successful',
+      admin: {
+        id: admin.id,
+        name: admin.name,
+        email: admin.email,
+        role: admin.role,
+        phoneNumber: admin.phoneNumber
+      }
+    };
+  }
 
   async create(createAdminDto: CreateAdminDto): Promise<Admin> {
     const existingAdmin = await this.adminRepository.findOne({

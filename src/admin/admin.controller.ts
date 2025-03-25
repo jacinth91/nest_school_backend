@@ -1,17 +1,22 @@
-import { Controller, Get, Post, Body, Patch, Param, Delete, UseGuards } from '@nestjs/common';
+import { Controller, Get, Post, Body, Patch, Param, Delete } from '@nestjs/common';
 import { ApiTags, ApiOperation, ApiResponse } from '@nestjs/swagger';
 import { AdminService } from './admin.service';
 import { CreateAdminDto } from './dto/create-admin.dto';
 import { UpdateAdminDto } from './dto/update-admin.dto';
-
-import { Roles } from '../auth/decorators/roles.decorator';
+import { AdminLoginDto } from './dto/admin-login.dto';
 
 @ApiTags('admins')
 @Controller('admins')
-//@UseGuards(JwtAuthGuard, RolesGuard)
-@Roles('admin')
 export class AdminController {
   constructor(private readonly adminService: AdminService) {}
+
+  @Post('login')
+  @ApiOperation({ summary: 'Admin login' })
+  @ApiResponse({ status: 200, description: 'Login successful' })
+  @ApiResponse({ status: 401, description: 'Invalid credentials' })
+  login(@Body() adminLoginDto: AdminLoginDto) {
+    return this.adminService.login(adminLoginDto);
+  }
 
   @Post()
   @ApiOperation({ summary: 'Create a new admin' })
