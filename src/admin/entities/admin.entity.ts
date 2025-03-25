@@ -2,8 +2,8 @@ import { Entity, PrimaryGeneratedColumn, Column, CreateDateColumn, UpdateDateCol
 
 @Entity('admins')
 export class Admin {
-  @PrimaryGeneratedColumn()
-  id: number;
+  @PrimaryGeneratedColumn('uuid')
+  id: string;
 
   @Column()
   name: string;
@@ -11,11 +11,14 @@ export class Admin {
   @Column({ unique: true })
   email: string;
 
+  @Column({ default: 'admin' })
+  role: string;
+
+  @Column()
+  phoneNumber: string;
+
   @Column()
   password: string;
-
-  @Column({ default: 'ADMIN' })
-  role: string;
 
   @CreateDateColumn()
   createdAt: Date;

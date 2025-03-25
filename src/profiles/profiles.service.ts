@@ -22,7 +22,7 @@ export class ProfilesService {
   async getProfile(id: number, role: string) {
     switch (role.toUpperCase()) {
       case 'ADMIN':
-        const admin = await this.adminRepository.findOne({ where: { id } });
+        const admin = await this.adminRepository.findOne({ where: { id: id.toString() } });
         if (!admin) {
           throw new NotFoundException('Admin not found');
         }
@@ -50,7 +50,7 @@ export class ProfilesService {
   async updateProfile(id: number, role: string, updateDto: UpdateAdminDto | UpdateParentDto | UpdateVendorDto) {
     switch (role.toUpperCase()) {
       case 'ADMIN':
-        const admin = await this.adminRepository.findOne({ where: { id } });
+        const admin = await this.adminRepository.findOne({ where: { id: id.toString() } });
         if (!admin) {
           throw new NotFoundException('Admin not found');
         }

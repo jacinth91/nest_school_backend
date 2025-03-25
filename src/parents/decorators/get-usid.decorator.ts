@@ -12,7 +12,7 @@ export const GetUsid = createParamDecorator(
   (data: unknown, ctx: ExecutionContext): string => {
     const request = ctx.switchToHttp().getRequest();
     const authHeader = request.headers.authorization;
-
+    console.log(authHeader,'authHeader***');
     if (!authHeader) {
       throw new UnauthorizedException('Authorization header is missing');
     }
@@ -26,7 +26,7 @@ export const GetUsid = createParamDecorator(
     try {
       // Decode JWT token
       const decoded = jwt.verify(authHeader, process.env.JWT_SECRET) as JwtPayload;
-      
+      console.log(decoded,'***');
       if (!decoded.usid) {
         throw new UnauthorizedException('Invalid token: USID not found');
       }
