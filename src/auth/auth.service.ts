@@ -100,11 +100,20 @@ export class AuthService {
       parent.isOtpVerified = true;
       parent.otp = null;
       parent.otpExpiresAt = null;
+
+      const payload = {
+        sub: verifyOtpDto.usid,
+        role: parent.role,
+        parentId: parent.id
+      };
+
+      const token = this.jwtService.sign(payload, { secret: process.env.JWT_SECRET });
       await this.parentRepository.save(parent);
 
       return {
         success: true,
-        message: 'OTP verified successfully'
+        message: 'OTP verified successfully',
+        access_token: token
       };
     } catch (error) {
       throw new InternalServerErrorException('Failed to verify OTP', {
