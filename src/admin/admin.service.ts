@@ -90,8 +90,18 @@ export class AdminService {
     return this.adminRepository.save(admin);
   }
 
-  async findAll(): Promise<Admin[]> {
-    return this.adminRepository.find();
+  async findAll() {
+    const admins = await this.adminRepository.find({
+      where: { role: 'admin' },
+      select: ['name', 'email', 'phoneNumber', 'role'] // Exclude password
+    });
+
+    return {
+      success: true,
+      message: 'Admins retrieved successfully',
+      admins
+    };
+  
   }
 
   async findOne(id: string): Promise<Admin> {
@@ -116,5 +126,18 @@ export class AdminService {
   async remove(id: string): Promise<void> {
     const admin = await this.findOne(id);
     await this.adminRepository.remove(admin);
+  }
+
+  async findVendors() {
+    const vendors = await this.adminRepository.find({
+      where: { role: 'vendor' },
+      select: ['name', 'email', 'phoneNumber', 'role'] // Exclude password
+    });
+
+    return {
+      success: true,
+      message: 'Vendors retrieved successfully',
+      vendors
+    };
   }
 } 

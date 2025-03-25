@@ -41,6 +41,13 @@ export class AdminController {
     return this.adminService.loadUser(req.user.email);
   }
 
+  @Get('vendors')
+  @ApiOperation({ summary: 'Get all vendor admins' })
+  @ApiResponse({ status: 200, description: 'Returns all vendor admins' })
+  findVendors() {
+    return this.adminService.findVendors();
+  }
+
   @Post()
   @ApiOperation({ summary: 'Create a new admin' })
   @ApiResponse({ status: 201, description: 'Admin created successfully' })
