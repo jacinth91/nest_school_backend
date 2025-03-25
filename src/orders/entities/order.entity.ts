@@ -1,5 +1,6 @@
-import { Entity, PrimaryGeneratedColumn, Column, CreateDateColumn, UpdateDateColumn, ManyToOne, JoinColumn, OneToMany } from 'typeorm';
+import { Entity, PrimaryGeneratedColumn, Column, ManyToOne, OneToMany, CreateDateColumn, UpdateDateColumn, JoinColumn } from 'typeorm';
 import { Parent } from '../../parents/entities/parent.entity';
+import { OrderItem } from './order-item.entity';
 import { Payment } from './payment.entity';
 
 export enum OrderStatus {
@@ -32,21 +33,15 @@ export class Order {
   })
   status: OrderStatus;
 
-  @Column({ type: 'jsonb', nullable: true })
-  items: any[];
-
-  @Column({ type: 'text', nullable: true })
-  paymentMethod: string;
-
-  @Column({ type: 'text', nullable: true })
-  transactionId: string;
+  @OneToMany(() => OrderItem, orderItem => orderItem.order)
+  items: OrderItem[];
 
   @OneToMany(() => Payment, payment => payment.order)
   payments: Payment[];
 
-  @CreateDateColumn()
+  @CreateDateColumn({name: 'created_at'})
   createdAt: Date;
 
-  @UpdateDateColumn()
+  @UpdateDateColumn({name: 'updated_at'})
   updatedAt: Date;
 } 

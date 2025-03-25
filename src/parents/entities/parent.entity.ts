@@ -33,17 +33,17 @@ export class Parent {
   @Column({ nullable: true })
   otp: string;
 
-  @Column({ nullable: true })
+  @Column({ nullable: true , name: 'otp_expires_at' })
   otpExpiresAt: Date;
 
-  @Column({ default: false })
+  @Column({ default: false, name: 'is_otp_verified' })
   isOtpVerified: boolean;
 
-  @CreateDateColumn()
-  createdAt: Date;
+  // @CreateDateColumn()
+  // createdAt: Date;
 
-  @UpdateDateColumn()
-  updatedAt: Date;
+  // @UpdateDateColumn()
+  // updatedAt: Date;
 
   studentData?: Student[];
 } 
