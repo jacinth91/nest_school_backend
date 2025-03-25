@@ -49,24 +49,7 @@ export class ProductsService {
     await this.productRepository.remove(product);
   }
 
-  async findActive(): Promise<Product[]> {
-    return await this.productRepository.find({
-      where: { isActive: true },
-      order: {
-        createdAt: 'DESC',
-      },
-    });
-  }
+ 
 
-  async findByPriceRange(min: number, max: number): Promise<Product[]> {
-    return await this.productRepository.find({
-      where: {
-        price: Between(min, max),
-        isActive: true,
-      },
-      order: {
-        price: 'ASC',
-      },
-    });
-  }
+  
 } 

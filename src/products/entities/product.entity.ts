@@ -8,17 +8,8 @@ export class Product {
   @Column()
   name: string;
 
-  @Column()
-  description: string;
-
-  @Column({ type: 'decimal', precision: 10, scale: 2 })
+  @Column({ type: 'decimal', precision: 10, scale: 2 ,name: 'unit_price'})
   price: number;
-
-  @Column({ default: 0 })
-  quantity: number;
-
-  @Column({ default: true })
-  isActive: boolean;
 
   @CreateDateColumn({ name: 'created_at' })
   createdAt: Date;

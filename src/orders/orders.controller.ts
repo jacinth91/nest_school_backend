@@ -1,4 +1,4 @@
-import { Controller, Post, Body, UseGuards, BadRequestException } from '@nestjs/common';
+import { Controller, Post, Body, UseGuards, BadRequestException, Get } from '@nestjs/common';
 import { ApiTags, ApiOperation, ApiResponse } from '@nestjs/swagger';
 import { OrdersService } from './orders.service';
 import { Order } from './entities/order.entity';
@@ -31,5 +31,14 @@ export class OrdersController {
       placeOrderDto.parentId,
       placeOrderDto.paymentMethod
     );
+  }
+
+  @Get()
+  //@Roles('admin')
+  @ApiOperation({ summary: 'Get all orders' })
+  @ApiResponse({ status: 200, description: 'Returns all orders' })
+  @ApiResponse({ status: 404, description: 'No orders found' })
+  async findAll() {
+    return this.ordersService.findAll();
   }
 } 

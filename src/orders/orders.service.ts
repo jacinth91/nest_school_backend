@@ -63,7 +63,7 @@ export class OrdersService {
       // Transform cart items to order items
       for (const cartItem of cartItems) {
         const orderItem = queryRunner.manager.create(OrderItem, {
-          orderId: savedOrder.id,
+          orderId: parseInt(savedOrder.id),
           bundleId: cartItem.bundleId,
           quantity: cartItem.quantity,
           unitPrice: cartItem.bundle.totalPrice
@@ -73,7 +73,7 @@ export class OrdersService {
 
       // Create payment
       const payment = queryRunner.manager.create(Payment, {
-        orderId: savedOrder.id,
+        orderId: parseInt(savedOrder.id),
         amount: totalPrice,
         paymentMethod,
         paymentStatus: PaymentStatus.PENDING
@@ -98,5 +98,20 @@ export class OrdersService {
     } finally {
       await queryRunner.release();
     }
+  }
+
+  async findAll() {
+    const orders = await this.orderRepository.find({
+      relations: ['parent'],
+      order: {
+        createdAt: 'DESC'
+      }
+    });
+
+    if (!orders.length) {
+      throw new NotFoundException('No orders found');
+    }
+
+    return orders;
   }
 } 

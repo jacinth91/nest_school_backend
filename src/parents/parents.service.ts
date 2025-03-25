@@ -25,7 +25,7 @@ export class ParentsService {
 
   async findOne(id: number): Promise<Parent> {
     const parent = await this.parentRepository.findOne({
-      where: { id },
+      where: { id: id.toString() },
       select: ['id', 'parentName', 'students', 'gender', 'campus', 'address','role']
     });
 
@@ -80,7 +80,7 @@ export class ParentsService {
     try {
       // Check if parent exists
       const parent = await this.parentRepository.findOne({
-        where: { id: parentId }
+        where: { id: parentId.toString() }
       });
 
       if (!parent) {
@@ -146,7 +146,7 @@ export class ParentsService {
     return await this.parentRepository.save(parent);
   }
 
-  async verifyParentLogin(studentUsid: string): Promise<{ exists: boolean; parentData?: Parent }> {
+  async verifyParentLogin(studentUsid: string): Promise<Parent> {
     if (!studentUsid) {
       throw new BadRequestException('Student USID is required for login');
     }
@@ -159,28 +159,37 @@ export class ParentsService {
         .getOne();
 
       if (!parent) {
-        return { exists: false };
+        throw new UnauthorizedException('Invalid login credentials');
       }
 
-      // Fetch student data for each student ID
+      // Verify if the student exists
+      const student = await this.studentRepository.findOne({
+        where: { usid: studentUsid }
+      });
+
+      if (!student) {
+        throw new UnauthorizedException('Student not found');
+      }
+
+      // Fetch all student data for the parent
       const studentData = await Promise.all(
         parent.students.map(async (usid) => {
-          const student = await this.studentRepository.findOne({
+          const studentInfo = await this.studentRepository.findOne({
             where: { usid }
           });
-          return student;
+          return studentInfo;
         })
       );
 
-      // Return success with parent data
+      // Return parent data with associated student information
       return {
-        exists: true,
-        parentData: {
-          ...parent,
-          studentData
-        }
+        ...parent,
+        studentData
       };
     } catch (error) {
+      if (error instanceof UnauthorizedException || error instanceof BadRequestException) {
+        throw error;
+      }
       throw new InternalServerErrorException('Error during login verification', {
         cause: error,
         description: error.message

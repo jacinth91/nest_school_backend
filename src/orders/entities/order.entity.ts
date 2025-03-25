@@ -1,6 +1,5 @@
-import { Entity, PrimaryGeneratedColumn, Column, ManyToOne, OneToMany, CreateDateColumn, UpdateDateColumn, JoinColumn } from 'typeorm';
+import { Entity, PrimaryGeneratedColumn, Column, CreateDateColumn, UpdateDateColumn, ManyToOne, JoinColumn, OneToMany } from 'typeorm';
 import { Parent } from '../../parents/entities/parent.entity';
-import { OrderItem } from './order-item.entity';
 import { Payment } from './payment.entity';
 
 export enum OrderStatus {
@@ -11,15 +10,17 @@ export enum OrderStatus {
 
 @Entity('orders')
 export class Order {
-  @PrimaryGeneratedColumn()
-  id: number;
+  @PrimaryGeneratedColumn('uuid')
+  id: string;
+
+  @Column({ name: 'parent_id' })
+  parentId: number;
 
   @ManyToOne(() => Parent)
   @JoinColumn({ name: 'parent_id' })
   parent: Parent;
 
-  @Column({ name: 'parent_id' })
-  parentId: number;
+
 
   @Column('decimal', { precision: 10, scale: 2, name: 'total_price' })
   totalPrice: number;
@@ -31,15 +32,21 @@ export class Order {
   })
   status: OrderStatus;
 
-  @OneToMany(() => OrderItem, orderItem => orderItem.order)
-  items: OrderItem[];
+  @Column({ type: 'jsonb', nullable: true })
+  items: any[];
+
+  @Column({ type: 'text', nullable: true })
+  paymentMethod: string;
+
+  @Column({ type: 'text', nullable: true })
+  transactionId: string;
 
   @OneToMany(() => Payment, payment => payment.order)
   payments: Payment[];
 
-  @CreateDateColumn({name: 'created_at'})
+  @CreateDateColumn()
   createdAt: Date;
 
-  @UpdateDateColumn({name: 'updated_at'})
+  @UpdateDateColumn()
   updatedAt: Date;
 } 

@@ -5,6 +5,9 @@ import { Repository } from 'typeorm';
 import { Parent } from '../parents/entities/parent.entity';
 import { Student } from '../students/entities/student.entity';
 import { LoginDto } from './dto/login.dto';
+import { SendOtpDto } from './dto/send-otp.dto';
+import { VerifyOtpDto } from './dto/verify-otp.dto';
+import { HttpService } from '@nestjs/axios';
 import * as bcrypt from 'bcrypt';
 
 @Injectable()
@@ -15,7 +18,95 @@ export class AuthService {
     @InjectRepository(Student)
     private readonly studentRepository: Repository<Student>,
     private readonly jwtService: JwtService,
+    private readonly httpService: HttpService,
   ) { }
+
+  private generateOTP(): string {
+    return Math.floor(100000 + Math.random() * 900000).toString();
+  }
+
+  async sendOTP(sendOtpDto: SendOtpDto) {
+    try {
+      // Find parent by phone number
+      const parent = await this.parentRepository.findOne({
+        where: { phoneNumber: sendOtpDto.phoneNumber }
+      });
+
+      if (!parent) {
+        throw new NotFoundException('Parent not found with this phone number');
+      }
+
+      // Generate 6-digit OTP
+      const otp = this.generateOTP();
+      const expiresAt = new Date();
+      expiresAt.setMinutes(expiresAt.getMinutes() + 10); // OTP expires in 10 minutes
+
+      // Update parent with OTP
+      parent.otp = otp;
+      parent.otpExpiresAt = expiresAt;
+      parent.isOtpVerified = false;
+      await this.parentRepository.save(parent);
+
+      // Send OTP via SMS
+      const smsUrl = `http://sms.teleosms.com/api/mt/SendSMS?user=demo&password=demo123&senderid=TELEOS&channel=Trans&DCS=0&flashsms=0&number=${sendOtpDto.phoneNumber}&text=Your%20OTP%20is%20${otp}&route=2`;
+      
+      await this.httpService.axiosRef.get(smsUrl);
+
+      return {
+        success: true,
+        message: 'OTP sent successfully',
+        expiresIn: '10 minutes'
+      };
+    } catch (error) {
+      throw new InternalServerErrorException('Failed to send OTP', {
+        cause: error,
+        description: error.message
+      });
+    }
+  }
+
+  async verifyOTP(verifyOtpDto: VerifyOtpDto) {
+    try {
+      // Find parent by phone number
+      const parent = await this.parentRepository.findOne({
+        where: { phoneNumber: verifyOtpDto.phoneNumber }
+      });
+
+      if (!parent) {
+        throw new NotFoundException('Parent not found with this phone number');
+      }
+
+      // Check if OTP exists and is not expired
+      if (!parent.otp || !parent.otpExpiresAt) {
+        throw new BadRequestException('No OTP found for this phone number');
+      }
+
+      if (new Date() > parent.otpExpiresAt) {
+        throw new BadRequestException('OTP has expired');
+      }
+
+      // Verify OTP
+      if (parent.otp !== verifyOtpDto.otp) {
+        throw new BadRequestException('Invalid OTP');
+      }
+
+      // Mark OTP as verified
+      parent.isOtpVerified = true;
+      parent.otp = null;
+      parent.otpExpiresAt = null;
+      await this.parentRepository.save(parent);
+
+      return {
+        success: true,
+        message: 'OTP verified successfully'
+      };
+    } catch (error) {
+      throw new InternalServerErrorException('Failed to verify OTP', {
+        cause: error,
+        description: error.message
+      });
+    }
+  }
 
   async login(loginDto: LoginDto) {
     if (!loginDto.usid || !loginDto.password) {

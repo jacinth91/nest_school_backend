@@ -1,10 +1,10 @@
-import { Entity, Column, PrimaryGeneratedColumn, ManyToMany, JoinTable } from 'typeorm';
+import { Entity, Column, PrimaryGeneratedColumn, ManyToMany, JoinTable, CreateDateColumn, UpdateDateColumn } from 'typeorm';
 import { Student } from '../../students/entities/student.entity';
 
 @Entity('parents')
 export class Parent {
-  @PrimaryGeneratedColumn('increment')
-  id: number;
+  @PrimaryGeneratedColumn('uuid')
+  id: string;
 
   @Column({ name: 'parent_name' })
   parentName: string;
@@ -29,6 +29,21 @@ export class Parent {
 
   @Column({ default: 'parent' })
   role: string;
+
+  @Column({ nullable: true })
+  otp: string;
+
+  @Column({ nullable: true })
+  otpExpiresAt: Date;
+
+  @Column({ default: false })
+  isOtpVerified: boolean;
+
+  @CreateDateColumn()
+  createdAt: Date;
+
+  @UpdateDateColumn()
+  updatedAt: Date;
 
   studentData?: Student[];
 } 

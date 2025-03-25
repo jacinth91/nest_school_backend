@@ -29,7 +29,7 @@ export class ProfilesService {
         return admin;
 
       case 'PARENT':
-        const parent = await this.parentRepository.findOne({ where: { id } });
+        const parent = await this.parentRepository.findOne({ where: { id: id.toString() } });
         if (!parent) {
           throw new NotFoundException('Parent not found');
         }
@@ -58,7 +58,7 @@ export class ProfilesService {
         return await this.adminRepository.save(admin);
 
       case 'PARENT':
-        const parent = await this.parentRepository.findOne({ where: { id } });
+        const parent = await this.parentRepository.findOne({ where: { id: id.toString() } });
         if (!parent) {
           throw new NotFoundException('Parent not found');
         }

@@ -18,18 +18,9 @@ export class ProductsController {
     return await this.productsService.findAll();
   }
 
-  @Get('active')
-  async findActive(): Promise<Product[]> {
-    return await this.productsService.findActive();
-  }
+ 
 
-  @Get('price-range')
-  async findByPriceRange(
-    @Query('min', ParseIntPipe) min: number,
-    @Query('max', ParseIntPipe) max: number,
-  ): Promise<Product[]> {
-    return await this.productsService.findByPriceRange(min, max);
-  }
+ 
 
   @Get(':id')
   async findOne(@Param('id', ParseIntPipe) id: number): Promise<Product> {

@@ -8,10 +8,11 @@ import { Payment } from './entities/payment.entity';
 import { Bundle } from '../bundles/entities/bundle.entity';
 import { Cart } from '../cart/entities/cart.entity';
 import { CartItem } from '../cart/entities/cart-item.entity';
+import { Parent } from '../parents/entities/parent.entity';
 
 @Module({
   imports: [
-    TypeOrmModule.forFeature([Order, OrderItem, Payment, Bundle, Cart, CartItem])
+    TypeOrmModule.forFeature([Order, OrderItem, Payment, Bundle, Cart, CartItem, Parent])
   ],
   controllers: [OrdersController],
   providers: [OrdersService],
