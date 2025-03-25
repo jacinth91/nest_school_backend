@@ -1,7 +1,9 @@
-import { IsString, Matches } from 'class-validator';
+import { IsString, IsNotEmpty } from 'class-validator';
+import { ApiProperty } from '@nestjs/swagger';
 
 export class SendOtpDto {
+  @ApiProperty()
   @IsString()
-  @Matches(/^[0-9]{10}$/, { message: 'Phone number must be 10 digits' })
-  phoneNumber: string;
+  @IsNotEmpty()
+  usid: string;
 } 

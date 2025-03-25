@@ -27,13 +27,14 @@ export class AuthService {
 
   async sendOTP(sendOtpDto: SendOtpDto) {
     try {
-      // Find parent by phone number
-      const parent = await this.parentRepository.findOne({
-        where: { phoneNumber: sendOtpDto.phoneNumber }
-      });
+      // Find parent with the given student USID in their students array
+      const parent = await this.parentRepository
+        .createQueryBuilder('parent')
+        .where(`'${sendOtpDto.usid}' = ANY(parent.students)`)
+        .getOne();
 
       if (!parent) {
-        throw new NotFoundException('Parent not found with this phone number');
+        throw new NotFoundException('Parent not found with this USID');
       }
 
       // Generate 6-digit OTP
@@ -47,10 +48,14 @@ export class AuthService {
       parent.isOtpVerified = false;
       await this.parentRepository.save(parent);
 
-      // Send OTP via SMS
-      const smsUrl = `http://sms.teleosms.com/api/mt/SendSMS?user=demo&password=demo123&senderid=TELEOS&channel=Trans&DCS=0&flashsms=0&number=${sendOtpDto.phoneNumber}&text=Your%20OTP%20is%20${otp}&route=2`;
+      let otpText = `Dear Parent, ${otp} is the One Time Password to access The Gaudium Parent App. Do not share this OTP with anyone for security reasons. Regards, Team Gaudium`;
       
-      await this.httpService.axiosRef.get(smsUrl);
+      // Send OTP via SMS using parent's phone number
+      const smsUrl = `http://sms.teleosms.com/api/mt/SendSMS?APIKey=${process.env.SMS_API_KEY}&senderid=GDMSCH&channel=Trans&DCS=0&flashsms=0&number=91${parent.phoneNumber}&text=${otpText}&route=2`;
+      
+      await this.httpService.axiosRef.get(smsUrl).then((res)=>{
+        console.log(res.data,'res***');
+      });
 
       return {
         success: true,
@@ -67,18 +72,19 @@ export class AuthService {
 
   async verifyOTP(verifyOtpDto: VerifyOtpDto) {
     try {
-      // Find parent by phone number
-      const parent = await this.parentRepository.findOne({
-        where: { phoneNumber: verifyOtpDto.phoneNumber }
-      });
+      // Find parent with the given student USID in their students array
+      const parent = await this.parentRepository
+        .createQueryBuilder('parent')
+        .where(`'${verifyOtpDto.usid}' = ANY(parent.students)`)
+        .getOne();
 
       if (!parent) {
-        throw new NotFoundException('Parent not found with this phone number');
+        throw new NotFoundException('Parent not found with this USID');
       }
 
       // Check if OTP exists and is not expired
       if (!parent.otp || !parent.otpExpiresAt) {
-        throw new BadRequestException('No OTP found for this phone number');
+        throw new BadRequestException('No OTP found for this USID');
       }
 
       if (new Date() > parent.otpExpiresAt) {
