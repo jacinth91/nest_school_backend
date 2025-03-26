@@ -17,7 +17,7 @@ export class Student {
 
 
   @Column({ name: 'student_type' })
-  studentType
+  studentType: string;
 
   @Column({ name: 'admission_year' })
   admissionYear: string;
