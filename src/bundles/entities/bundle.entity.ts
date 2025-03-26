@@ -43,7 +43,7 @@ export class Bundle {
   @IsNotEmpty()
   totalPrice: number;
 
-  @Column({ name: 'image_url', length: 255 })
+  @Column({ name: 'image', length: 255 })
   @IsString()
   @IsNotEmpty()
   image: string;
