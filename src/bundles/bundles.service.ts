@@ -65,6 +65,7 @@ export class BundlesService {
       gender: data[0].gender,
       applicable_classes: data[0].applicable_classes,
       class_name: data[0].class_name,
+      image: data[0].image,
       bundle_total: parseFloat(data[0].bundle_total),
       products: data.map(item => ({
         product_id: item.product_id,
@@ -110,6 +111,7 @@ export class BundlesService {
       .select([
         'b.id as bundle_id',
         'b.name as bundle_name',
+        'b.image as image',
         'b.gender as gender',
         'b.applicableClasses as applicable_classes',
         `CASE 

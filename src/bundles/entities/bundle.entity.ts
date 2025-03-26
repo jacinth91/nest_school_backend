@@ -43,6 +43,11 @@ export class Bundle {
   @IsNotEmpty()
   totalPrice: number;
 
+  @Column({ name: 'image_url', length: 255 })
+  @IsString()
+  @IsNotEmpty()
+  image: string;
+
   @OneToMany(() => BundleProduct, (bundleProduct) => bundleProduct.bundle, {
     cascade: true,
     eager: true

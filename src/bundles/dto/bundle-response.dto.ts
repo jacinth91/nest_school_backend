@@ -21,6 +21,9 @@ export class BundleResponseDto {
   @ApiProperty({ description: 'ID of the bundle' })
   bundle_id: number;
 
+  @ApiProperty({ description: 'Image of the bundle' })
+  image: string;
+
   @ApiProperty({ description: 'Name of the bundle' })
   bundle_name: string;
 

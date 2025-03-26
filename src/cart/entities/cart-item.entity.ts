@@ -25,4 +25,5 @@ export class CartItem {
 
   @Column({ type: 'int', default: 1 })
   quantity: number;
+  CartItem: any;
 } 
