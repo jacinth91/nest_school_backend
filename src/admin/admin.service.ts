@@ -56,7 +56,7 @@ export class AdminService {
     };
 
     // Generate JWT token
-    const token = this.jwtService.sign(payload);
+    const token = this.jwtService.sign(payload, { secret: process.env.JWT_SECRET });
 
     return {
       success: true,

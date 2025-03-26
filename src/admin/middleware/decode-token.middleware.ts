@@ -8,14 +8,14 @@ export class DecodeTokenMiddleware implements NestMiddleware {
 
   use(req: Request, res: Response, next: NextFunction) {
     const authHeader = req.headers.authorization;
-    
+    console.log(authHeader,'^^^^');
     if (!authHeader) {
       throw new UnauthorizedException('No authorization token provided');
     }
 
     try {
       //const token = authHeader.split(' ')[1];
-      const decoded = this.jwtService.verify(authHeader);
+      const decoded = this.jwtService.verify(authHeader, { secret: process.env.JWT_SECRET });
       console.log(decoded,'*********');
       // Add decoded user to request  
       req['user'] = {

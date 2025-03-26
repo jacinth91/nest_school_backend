@@ -31,7 +31,15 @@ export class AdminController {
     return this.adminService.login(adminLoginDto);
   }
 
-  @Post('load-user')
+ 
+
+  @Get('vendors')
+  @ApiOperation({ summary: 'Get all vendor admins' })
+  @ApiResponse({ status: 200, description: 'Returns all vendor admins' })
+  findVendors() {
+    return this.adminService.findVendors();
+  }
+  @Get('load/user')
   //@UseGuards(JwtAuthGuard)
   //@ApiBearerAuth()
   @ApiOperation({ summary: 'Load admin user details' })
@@ -39,13 +47,6 @@ export class AdminController {
   @ApiResponse({ status: 404, description: 'Admin not found' })
   loadUser(@Req() req: RequestWithUser) {
     return this.adminService.loadUser(req.user.email);
-  }
-
-  @Get('vendors')
-  @ApiOperation({ summary: 'Get all vendor admins' })
-  @ApiResponse({ status: 200, description: 'Returns all vendor admins' })
-  findVendors() {
-    return this.adminService.findVendors();
   }
 
   @Post()
@@ -62,7 +63,7 @@ export class AdminController {
     return this.adminService.findAll();
   }
 
-  @Get(':id')
+  @Get('user/:id')
   @ApiOperation({ summary: 'Get admin by id' })
   @ApiResponse({ status: 200, description: 'Returns the admin' })
   @ApiResponse({ status: 404, description: 'Admin not found' })
