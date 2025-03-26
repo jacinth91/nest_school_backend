@@ -114,4 +114,24 @@ export class OrdersService {
 
     return orders;
   }
+
+  async findByParentId(parentId: string) {
+    const orders = await this.orderRepository.find({
+      where: { parentId: parseInt(parentId) },
+      relations: ['items', 'items.bundle'],
+      order: {
+        createdAt: 'DESC'
+      }
+    });
+
+    if (!orders.length) {
+      throw new NotFoundException('No orders found for this parent');
+    }
+
+    return {
+      success: true,
+      message: 'Orders retrieved successfully',
+      orders
+    };
+  }
 } 

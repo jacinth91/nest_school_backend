@@ -1,4 +1,4 @@
-import { Controller, Post, Body, UseGuards, BadRequestException, Get } from '@nestjs/common';
+import { Controller, Post, Body, UseGuards, BadRequestException, Get, Param } from '@nestjs/common';
 import { ApiTags, ApiOperation, ApiResponse } from '@nestjs/swagger';
 import { OrdersService } from './orders.service';
 import { Order } from './entities/order.entity';
@@ -40,5 +40,17 @@ export class OrdersController {
   @ApiResponse({ status: 404, description: 'No orders found' })
   async findAll() {
     return this.ordersService.findAll();
+  }
+
+  
+  @Get('parent/:parentId')
+  //@UseGuards(JwtAuthGuard, RolesGuard)
+  //@Roles('admin', 'parent')
+  //@ApiBearerAuth()
+  @ApiOperation({ summary: 'Get orders by parent ID' })
+  @ApiResponse({ status: 200, description: 'Returns all orders for the parent' })
+  @ApiResponse({ status: 404, description: 'No orders found' })
+  findByParentId(@Param('parentId') parentId: string) {
+    return this.ordersService.findByParentId(parentId);
   }
 } 
