@@ -2,6 +2,7 @@ import { Controller, Get, Post, Body, Param, Put, ParseIntPipe, UseGuards, Forbi
 import { ApiTags, ApiOperation, ApiResponse } from '@nestjs/swagger';
 import { FeedbackService } from './feedback.service';
 import { CreateFeedbackDto } from './dto/create-feedback.dto';
+import { UpdateFeedbackDto } from './dto/update-feedback.dto';
 import { FeedbackResponseDto } from './dto/feedback-response.dto';
 import { JwtAuthGuard } from '../auth/guards/jwt-auth.guard';
 import { RolesGuard } from '../auth/guards/roles.guard';
@@ -79,5 +80,19 @@ export class FeedbackController {
     @Body('status') status: string,
   ): Promise<FeedbackResponseDto> {
     return await this.feedbackService.updateStatus(id, status);
+  }
+
+  @Put(':id')
+  //@Roles('parent')
+  @ApiOperation({ summary: 'Update feedback' })
+  @ApiResponse({ status: 200, description: 'Feedback updated successfully', type: FeedbackResponseDto })
+  @ApiResponse({ status: 404, description: 'Feedback not found' })
+  @ApiResponse({ status: 403, description: 'Forbidden - can only update own feedback' })
+  async update(
+    @Param('id', ParseIntPipe) id: number,
+    @Body() updateFeedbackDto: UpdateFeedbackDto,
+    //@User() user: { id: number; name: string }
+  ): Promise<FeedbackResponseDto> {
+    return await this.feedbackService.update(id, updateFeedbackDto);
   }
 } 

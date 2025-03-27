@@ -1,8 +1,9 @@
-import { Injectable, NotFoundException } from '@nestjs/common';
+import { Injectable, NotFoundException, ForbiddenException } from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
 import { Repository } from 'typeorm';
 import { Feedback, QueryType } from './entities/feedback.entity';
 import { CreateFeedbackDto } from './dto/create-feedback.dto';
+import { UpdateFeedbackDto } from './dto/update-feedback.dto';
 import { FeedbackResponseDto } from './dto/feedback-response.dto';
 import { PubSubService } from '../notifications/pub-sub.service';
 
@@ -118,5 +119,34 @@ export class FeedbackService {
       order: { created_at: 'DESC' },
     });
     return feedbacks.map(feedback => this.transformToResponseDto(feedback));
+  }
+
+  async update(id: number, updateFeedbackDto: UpdateFeedbackDto): Promise<FeedbackResponseDto> {
+    const feedback = await this.feedbackRepository.findOne({
+      where: { id },
+    });
+
+    if (!feedback) {
+      throw new NotFoundException(`Feedback with ID ${id} not found`);
+    }
+
+    // if (feedback.parent_name !== parentName) {
+    //   throw new ForbiddenException('You can only update your own feedback');
+    // }
+
+    const updatedFeedback = await this.feedbackRepository.save({
+      ...feedback,
+      ...updateFeedbackDto,
+    });
+
+    await this.pubSubService.publish('feedback:updated', {
+      id: updatedFeedback.id,
+      parent_name: updatedFeedback.parent_name,
+      query_type: updatedFeedback.query_type,
+      student_usid: updatedFeedback.student_usid,
+      updated_at: updatedFeedback.updated_at,
+    });
+
+    return this.transformToResponseDto(updatedFeedback);
   }
 } 
