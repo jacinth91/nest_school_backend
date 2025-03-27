@@ -1,4 +1,8 @@
-import { Injectable, NotFoundException, BadRequestException } from '@nestjs/common';
+import {
+  Injectable,
+  NotFoundException,
+  BadRequestException,
+} from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
 import { Repository, In, Equal, ILike } from 'typeorm';
 import { Bundle, StudentType, Gender } from './entities/bundle.entity';
@@ -12,27 +16,32 @@ import { BundleResponseDto } from './dto/bundle-response.dto';
 
 @Injectable()
 export class BundlesService {
-  private readonly validStudentTypes = ['New', 'Existing', 'Boarding', 'Hostel'];
+  private readonly validStudentTypes = [
+    'New',
+    'Existing',
+    'Boarding',
+    'Hostel',
+  ];
   private readonly genderMapping = {
     FEMALE: 'Girls',
-    MALE: 'Boys'
+    MALE: 'Boys',
   };
 
   // Class mapping for display
   private readonly classMapping = {
-    'PP2': 'PP2',
-    'I': '1st',
-    'II': '2nd',
-    'III': '3rd',
-    'IV': '4th',
-    'V': '5th',
-    'VI': '6th',
-    'VII': '7th',
-    'VIII': '8th',
-    'IX': '9th',
-    'X': '10th',
-    'XI': '11th',
-    'XII': '12th'
+    PP2: 'PP2',
+    I: '1st',
+    II: '2nd',
+    III: '3rd',
+    IV: '4th',
+    V: '5th',
+    VI: '6th',
+    VII: '7th',
+    VIII: '8th',
+    IX: '9th',
+    X: '10th',
+    XI: '11th',
+    XII: '12th',
   };
 
   constructor(
@@ -50,7 +59,7 @@ export class BundlesService {
 
   async findAll(): Promise<Bundle[]> {
     return await this.bundleRepository.find({
-      relations: ['bundleProducts', 'bundleProducts.product']
+      relations: ['bundleProducts', 'bundleProducts.product'],
     });
   }
 
@@ -67,25 +76,27 @@ export class BundlesService {
       class_name: data[0].class_name,
       image: data[0].image,
       bundle_total: parseFloat(data[0].bundle_total),
-      products: data.map(item => ({
+      products: data.map((item) => ({
         product_id: item.product_id,
         product_name: item.product_name,
         unit_price: parseFloat(item.unit_price),
         quantity: parseInt(item.quantity),
-        optional: item.optional
-      }))
+        optional: item.optional,
+      })),
     };
   }
 
-  async searchBundles(usid: string): Promise<BundleResponseDto> {
-    let studentType: string = 'New';
+  async searchBundles(usid: string, type: string): Promise<BundleResponseDto> {
+    let studentType: string = type;
     if (!this.validStudentTypes.includes(studentType)) {
-      throw new BadRequestException(`Student type must be one of: ${this.validStudentTypes.join(', ')}`);
+      throw new BadRequestException(
+        `Student type must be one of: ${this.validStudentTypes.join(', ')}`,
+      );
     }
 
     // Find student by USID
     const student = await this.studentRepository.findOne({
-      where: { usid }
+      where: { usid },
     });
 
     if (!student) {
@@ -95,7 +106,9 @@ export class BundlesService {
     // Get gender mapping
     const mappedGender = this.genderMapping[student.gender.toUpperCase()];
     if (!mappedGender) {
-      throw new BadRequestException(`Invalid student gender: ${student.gender}`);
+      throw new BadRequestException(
+        `Invalid student gender: ${student.gender}`,
+      );
     }
 
     // Get student's class (take first class if multiple are present)
@@ -123,7 +136,7 @@ export class BundlesService {
         'p.unitPrice as unit_price',
         'bp.quantity as quantity',
         'bp.optional as optional',
-        'b.totalPrice as bundle_total'
+        'b.totalPrice as bundle_total',
       ])
       .innerJoin('b.bundleProducts', 'bp')
       .innerJoin('bp.product', 'p')
@@ -133,7 +146,9 @@ export class BundlesService {
       .getRawMany();
 
     if (!bundles.length) {
-      throw new NotFoundException(`No bundles found for student with USID ${usid} and class ${displayClassName}`);
+      throw new NotFoundException(
+        `No bundles found for student with USID ${usid} and class ${displayClassName}`,
+      );
     }
 
     return this.transformToResponseDto(bundles);
@@ -142,7 +157,7 @@ export class BundlesService {
   async getBundlesByStudentDetails(usid: string): Promise<BundleResponseDto> {
     // Find student by USID
     const student = await this.studentRepository.findOne({
-      where: { usid }
+      where: { usid },
     });
 
     if (!student) {
@@ -151,7 +166,9 @@ export class BundlesService {
 
     const mappedGender = this.genderMapping[student.gender.toUpperCase()];
     if (!mappedGender) {
-      throw new BadRequestException(`Invalid student gender: ${student.gender}`);
+      throw new BadRequestException(
+        `Invalid student gender: ${student.gender}`,
+      );
     }
 
     // Find matching bundles based on student's class and gender
@@ -166,7 +183,7 @@ export class BundlesService {
         'p.unitPrice as unit_price',
         'bp.quantity as quantity',
         'bp.optional as optional',
-        'b.totalPrice as bundle_total'
+        'b.totalPrice as bundle_total',
       ])
       .innerJoin('b.bundleProducts', 'bp')
       .innerJoin('bp.product', 'p')
@@ -175,7 +192,9 @@ export class BundlesService {
       .getRawMany();
 
     if (!bundles.length) {
-      throw new NotFoundException(`No bundles found for student with USID ${usid}`);
+      throw new NotFoundException(
+        `No bundles found for student with USID ${usid}`,
+      );
     }
 
     return this.transformToResponseDto(bundles);
