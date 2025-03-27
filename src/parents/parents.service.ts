@@ -1,4 +1,10 @@
-import { Injectable, NotFoundException, BadRequestException, InternalServerErrorException, UnauthorizedException } from '@nestjs/common';
+import {
+  Injectable,
+  NotFoundException,
+  BadRequestException,
+  InternalServerErrorException,
+  UnauthorizedException,
+} from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
 import { Repository } from 'typeorm';
 import { Parent } from './entities/parent.entity';
@@ -26,7 +32,15 @@ export class ParentsService {
   async findOne(id: number): Promise<Parent> {
     const parent = await this.parentRepository.findOne({
       where: { id: id.toString() },
-      select: ['id', 'parentName', 'students', 'gender', 'campus', 'address','role']
+      select: [
+        'id',
+        'parentName',
+        'students',
+        'gender',
+        'campus',
+        'address',
+        'role',
+      ],
     });
 
     if (!parent) {
@@ -54,33 +68,39 @@ export class ParentsService {
       .getOne();
 
     if (!parent) {
-      throw new NotFoundException(`Parent with student USID ${studentUsid} not found`);
+      throw new NotFoundException(
+        `Parent with student USID ${studentUsid} not found`,
+      );
     }
 
     // Fetch student data for each student ID
     const studentData = await Promise.all(
       parent.students.map(async (usid) => {
-        const student = await this.studentRepository.findOne({ where: { usid } });
+        const student = await this.studentRepository.findOne({
+          where: { usid },
+        });
         return student;
-      })
+      }),
     );
 
     // Add student data to parent object
     return {
       ...parent,
-      studentData
+      studentData,
     };
   }
 
   async addStudent(parentId: number, studentUsid: string): Promise<Parent> {
     if (!parentId || !studentUsid) {
-      throw new BadRequestException('Both parent ID and student USID are required');
+      throw new BadRequestException(
+        'Both parent ID and student USID are required',
+      );
     }
 
     try {
       // Check if parent exists
       const parent = await this.parentRepository.findOne({
-        where: { id: parentId.toString() }
+        where: { id: parentId.toString() },
       });
 
       if (!parent) {
@@ -89,11 +109,13 @@ export class ParentsService {
 
       // Check if student exists
       const student = await this.studentRepository.findOne({
-        where: { usid: studentUsid }
+        where: { usid: studentUsid },
       });
 
       if (!student) {
-        throw new NotFoundException(`Student with USID ${studentUsid} not found`);
+        throw new NotFoundException(
+          `Student with USID ${studentUsid} not found`,
+        );
       }
 
       // Initialize students array if it doesn't exist
@@ -104,12 +126,16 @@ export class ParentsService {
       // Check maximum student limit
       const MAX_STUDENTS = 3;
       if (parent.students.length >= MAX_STUDENTS) {
-        throw new BadRequestException(`Cannot add more students. Maximum limit of ${MAX_STUDENTS} students per parent has been reached`);
+        throw new BadRequestException(
+          `Cannot add more students. Maximum limit of ${MAX_STUDENTS} students per parent has been reached`,
+        );
       }
 
       // Check if student is already linked to this parent
       if (parent.students.includes(studentUsid)) {
-        throw new BadRequestException(`Student with USID ${studentUsid} is already linked to this parent`);
+        throw new BadRequestException(
+          `Student with USID ${studentUsid} is already linked to your profile`,
+        );
       }
 
       // Check if student is already linked to another parent
@@ -120,29 +146,36 @@ export class ParentsService {
         .getOne();
 
       if (existingParent) {
-        throw new BadRequestException(`Student with USID ${studentUsid} is already linked to another parent`);
+        throw new BadRequestException(
+          `Student with USID ${studentUsid} is already linked to another parent`,
+        );
       }
 
       // Add student to parent
       parent.students.push(studentUsid);
-      
+
       // Save and return updated parent
       return await this.parentRepository.save(parent);
-
     } catch (error) {
-      if (error instanceof BadRequestException || error instanceof NotFoundException) {
+      if (
+        error instanceof BadRequestException ||
+        error instanceof NotFoundException
+      ) {
         throw error;
       }
-      throw new InternalServerErrorException('Error while adding student to parent', {
-        cause: error,
-        description: error.message
-      });
+      throw new InternalServerErrorException(
+        'Error while adding student to parent',
+        {
+          cause: error,
+          description: error.message,
+        },
+      );
     }
   }
 
   async removeStudent(parentId: number, studentUsid: string): Promise<Parent> {
     const parent = await this.findOne(parentId);
-    parent.students = parent.students.filter(usid => usid !== studentUsid);
+    parent.students = parent.students.filter((usid) => usid !== studentUsid);
     return await this.parentRepository.save(parent);
   }
 
@@ -164,7 +197,7 @@ export class ParentsService {
 
       // Verify if the student exists
       const student = await this.studentRepository.findOne({
-        where: { usid: studentUsid }
+        where: { usid: studentUsid },
       });
 
       if (!student) {
@@ -175,25 +208,31 @@ export class ParentsService {
       const studentData = await Promise.all(
         parent.students.map(async (usid) => {
           const studentInfo = await this.studentRepository.findOne({
-            where: { usid }
+            where: { usid },
           });
           return studentInfo;
-        })
+        }),
       );
 
       // Return parent data with associated student information
       return {
         ...parent,
-        studentData
+        studentData,
       };
     } catch (error) {
-      if (error instanceof UnauthorizedException || error instanceof BadRequestException) {
+      if (
+        error instanceof UnauthorizedException ||
+        error instanceof BadRequestException
+      ) {
         throw error;
       }
-      throw new InternalServerErrorException('Error during login verification', {
-        cause: error,
-        description: error.message
-      });
+      throw new InternalServerErrorException(
+        'Error during login verification',
+        {
+          cause: error,
+          description: error.message,
+        },
+      );
     }
   }
-} 
+}
