@@ -8,6 +8,9 @@ export class Product {
   @Column()
   name: string;
 
+  @Column({ type: 'varchar', length: 255, name: 'image'})
+  imageUrl: string;
+
   @Column({ type: 'decimal', precision: 10, scale: 2 ,name: 'unit_price'})
   price: number;
 
