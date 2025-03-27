@@ -17,7 +17,11 @@ export class CartService {
     private readonly dataSource: DataSource,
   ) {}
 
-  async addBundleToCart(parentId: number, bundleId: number, quantity: number = 1): Promise<Cart> {
+  async addBundleToCart(
+    parentId: number,
+    bundleId: number,
+    quantity: number = 1,
+  ): Promise<Cart> {
     const queryRunner = this.dataSource.createQueryRunner();
     await queryRunner.connect();
     await queryRunner.startTransaction();
@@ -25,7 +29,7 @@ export class CartService {
     try {
       // Check if bundle exists first
       const bundle = await queryRunner.manager.findOne(Bundle, {
-        where: { id: bundleId }
+        where: { id: bundleId },
       });
 
       if (!bundle) {
@@ -42,36 +46,27 @@ export class CartService {
         // Create new cart
         cart = queryRunner.manager.create(Cart, { parentId });
         cart = await queryRunner.manager.save(Cart, cart);
+      }
 
-        // Create initial cart item
-        const cartItem = queryRunner.manager.create(CartItem, {
+      // Check if bundle is already in cart
+      let cartItem = await queryRunner.manager.findOne(CartItem, {
+        where: { cartId: cart.id, bundleId },
+      });
+
+      if (cartItem) {
+        // Ensure that the quantity update is explicit
+        cartItem.quantity = quantity;
+        await queryRunner.manager.save(CartItem, cartItem);
+      } else {
+        // Create new cart item
+        cartItem = queryRunner.manager.create(CartItem, {
           cartId: cart.id,
           bundleId,
           quantity,
           price: bundle.totalPrice,
-          bundle: bundle
+          bundle: bundle,
         });
         await queryRunner.manager.save(CartItem, cartItem);
-      } else {
-        // Check if bundle is already in cart
-        const items = await cart.items;
-        let cartItem = items?.find(item => item.bundleId === bundleId);
-
-        if (cartItem) {
-          // Update quantity if bundle already exists
-          cartItem.quantity += quantity;
-          await queryRunner.manager.save(CartItem, cartItem);
-        } else {
-          // Create new cart item
-          cartItem = queryRunner.manager.create(CartItem, {
-            cartId: cart.id,
-            bundleId,
-            quantity,
-            price: bundle.totalPrice,
-            bundle: bundle
-          });
-          await queryRunner.manager.save(CartItem, cartItem);
-        }
       }
 
       // Get final cart state within transaction
@@ -83,7 +78,6 @@ export class CartService {
       // Commit transaction
       await queryRunner.commitTransaction();
       return updatedCart;
-
     } catch (error) {
       await queryRunner.rollbackTransaction();
       throw error;
@@ -116,19 +110,21 @@ export class CartService {
       // Get cart with items
       const cart = await queryRunner.manager.findOne(Cart, {
         where: { parentId },
-        relations: ['items']
+        relations: ['items'],
       });
-      console.log(cart.items,'cart');
+      console.log(cart.items, 'cart');
       if (!cart) {
         throw new NotFoundException(`Cart not found for parent ${parentId}`);
       }
 
       // Get cart items
       const items = await cart.items;
-      const cartItem = items?.find(item => item.bundleId == bundleId);
+      const cartItem = items?.find((item) => item.bundleId == bundleId);
 
       if (!cartItem) {
-        throw new NotFoundException(`Bundle with ID ${bundleId} not found in cart`);
+        throw new NotFoundException(
+          `Bundle with ID ${bundleId} not found in cart`,
+        );
       }
 
       // Delete the cart item
@@ -137,12 +133,11 @@ export class CartService {
       // Get updated cart
       const updatedCart = await queryRunner.manager.findOne(Cart, {
         where: { id: cart.id },
-        relations: ['items', 'items.bundle']
+        relations: ['items', 'items.bundle'],
       });
 
       await queryRunner.commitTransaction();
       return updatedCart;
-
     } catch (error) {
       await queryRunner.rollbackTransaction();
       throw error;
@@ -150,4 +145,4 @@ export class CartService {
       await queryRunner.release();
     }
   }
-} 
+}
