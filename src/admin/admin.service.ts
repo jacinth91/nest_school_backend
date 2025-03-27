@@ -92,7 +92,6 @@ export class AdminService {
 
   async findAll() {
     const admins = await this.adminRepository.find({
-      where: { role: 'admin' },
       select: ['name', 'email', 'phoneNumber', 'role'] // Exclude password
     });
 
