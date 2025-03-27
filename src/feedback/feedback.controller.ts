@@ -54,20 +54,20 @@ export class FeedbackController {
     return feedback;
   }
 
-  @Get('parent/:name')
+  @Get('parent/:id')
   @Roles('admin', 'parent')
   @ApiOperation({ summary: 'Get feedback by parent name' })
   @ApiResponse({ status: 200, description: 'List of feedback for parent', type: [FeedbackResponseDto] })
   async findByParent(
-    @Param('name') name: string,
-    @User() user: { id: number; role: string; name: string }
+    @Param('id') id: number,
+    //@User() user: { id: number; role: string; name: string }
   ): Promise<FeedbackResponseDto[]> {
     // Parents can only view their own feedback
-    if (user.role === 'parent' && name !== user.name) {
-      throw new ForbiddenException('You can only view your own feedback');
-    }
+    // if (user.role === 'parent' && name !== user.name) {
+    //   throw new ForbiddenException('You can only view your own feedback');
+    // }
     
-    return await this.feedbackService.findByParentName(name);
+    return await this.feedbackService.findByParentName(id);
   }
 
   @Put(':id/status')

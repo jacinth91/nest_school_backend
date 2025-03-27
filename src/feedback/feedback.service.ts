@@ -113,9 +113,9 @@ export class FeedbackService {
     return feedbacks.map(feedback => this.transformToResponseDto(feedback));
   }
 
-  async findByParentName(parentName: string): Promise<FeedbackResponseDto[]> {
+  async findByParentName(id: number): Promise<FeedbackResponseDto[]> {
     const feedbacks = await this.feedbackRepository.find({
-      where: { parent_name: parentName },
+      where: { parent_id: id },
       order: { created_at: 'DESC' },
     });
     return feedbacks.map(feedback => this.transformToResponseDto(feedback));
