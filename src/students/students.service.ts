@@ -2,6 +2,7 @@ import { Injectable, BadRequestException, NotFoundException, InternalServerError
 import { InjectRepository } from '@nestjs/typeorm';
 import { Repository } from 'typeorm';
 import { Student } from './entities/student.entity';
+import { CreateStudentDto } from './dto/create-student.dto';
 import { UpdateStudentDto } from './dto/update-student.dto';
 
 @Injectable()
@@ -10,6 +11,20 @@ export class StudentsService {
     @InjectRepository(Student)
     private readonly studentRepository: Repository<Student>
   ) {}
+
+  async create(createStudentDto: CreateStudentDto): Promise<Student> {
+    // Check if USID already exists
+    const existingStudent = await this.studentRepository.findOne({
+      where: { usid: createStudentDto.usid },
+    });
+
+    if (existingStudent) {
+      throw new ConflictException(`Student with USID ${createStudentDto.usid} already exists`);
+    }
+
+    const student = this.studentRepository.create(createStudentDto);
+    return await this.studentRepository.save(student);
+  }
 
   async findAll(): Promise<Student[]> {
     return await this.studentRepository.find();

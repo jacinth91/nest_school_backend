@@ -22,12 +22,12 @@ export class Student {
   @Column({ name: 'admission_year' })
   admissionYear: string;
 
-  @BeforeInsert()
-  @BeforeUpdate()
-  setStudentType() {
-    const currentYear = new Date().getFullYear();
-    this.studentType = this.admissionYear.includes(currentYear.toString()) ? 'New' : 'Existing';
-  }
+  // @BeforeInsert()
+  // @BeforeUpdate()
+  // setStudentType() {
+  //   const currentYear = new Date().getFullYear();
+  //   this.studentType = this.admissionYear.includes(currentYear.toString()) ? 'New' : 'Existing';
+  // }
 
   @Column({ name: 'boarding' })
   boardingStatus: string;

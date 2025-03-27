@@ -2,6 +2,7 @@ import { Controller, Get, Post, Body, Patch, Param, Delete, UseGuards } from '@n
 import { ApiTags, ApiOperation, ApiResponse, ApiBearerAuth } from '@nestjs/swagger';
 import { StudentsService } from './students.service';
 import { Student } from './entities/student.entity';
+import { CreateStudentDto } from './dto/create-student.dto';
 import { UpdateStudentDto } from './dto/update-student.dto';
 import { JwtAuthGuard } from '../auth/guards/jwt-auth.guard';
 import { RolesGuard } from '../auth/guards/roles.guard';
@@ -11,6 +12,17 @@ import { Roles } from '../auth/decorators/roles.decorator';
 @Controller('students')
 export class StudentsController {
   constructor(private readonly studentsService: StudentsService) {}
+
+  @Post()
+  //@UseGuards(JwtAuthGuard, RolesGuard)
+  //@Roles('admin')
+  //@ApiBearerAuth()
+  @ApiOperation({ summary: 'Create new student' })
+  @ApiResponse({ status: 201, description: 'Student created successfully', type: Student })
+  @ApiResponse({ status: 409, description: 'USID already exists' })
+  async create(@Body() createStudentDto: CreateStudentDto): Promise<Student> {
+    return await this.studentsService.create(createStudentDto);
+  }
 
   @Patch(':id')
   //@UseGuards(JwtAuthGuard, RolesGuard)
