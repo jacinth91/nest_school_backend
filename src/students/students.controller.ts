@@ -1,10 +1,28 @@
-import { Controller, Get, Param, ParseIntPipe } from '@nestjs/common';
+import { Controller, Get, Post, Body, Patch, Param, Delete, UseGuards } from '@nestjs/common';
+import { ApiTags, ApiOperation, ApiResponse, ApiBearerAuth } from '@nestjs/swagger';
 import { StudentsService } from './students.service';
 import { Student } from './entities/student.entity';
+import { UpdateStudentDto } from './dto/update-student.dto';
+import { JwtAuthGuard } from '../auth/guards/jwt-auth.guard';
+import { RolesGuard } from '../auth/guards/roles.guard';
+import { Roles } from '../auth/decorators/roles.decorator';
 
+@ApiTags('students')
 @Controller('students')
 export class StudentsController {
   constructor(private readonly studentsService: StudentsService) {}
+
+  @Patch(':id')
+  //@UseGuards(JwtAuthGuard, RolesGuard)
+  //@Roles('admin')
+  //@ApiBearerAuth()
+  @ApiOperation({ summary: 'Update student details' })
+  @ApiResponse({ status: 200, description: 'Student updated successfully' })
+  @ApiResponse({ status: 404, description: 'Student not found' })
+  @ApiResponse({ status: 409, description: 'USID already exists' })
+  update(@Param('id') id: string, @Body() updateStudentDto: UpdateStudentDto) {
+    return this.studentsService.update(id, updateStudentDto);
+  }
 
   @Get()
   async findAll(): Promise<Student[]> {

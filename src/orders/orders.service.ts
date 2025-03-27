@@ -6,6 +6,7 @@ import { OrderItem } from './entities/order-item.entity';
 import { Payment, PaymentMethod, PaymentStatus } from './entities/payment.entity';
 import { Cart } from '../cart/entities/cart.entity';
 import { CartItem } from '../cart/entities/cart-item.entity';
+import { UpdateOrderStatusDto } from './dto/update-order-status.dto';
 
 @Injectable()
 export class OrdersService {
@@ -132,6 +133,29 @@ export class OrdersService {
       success: true,
       message: 'Orders retrieved successfully',
       orders
+    };
+  }
+
+  async updateStatus(id: string, updateOrderStatusDto: UpdateOrderStatusDto) {
+    const order = await this.orderRepository.findOne({
+      where: { id },
+      relations: ['items', 'items.bundle']
+    });
+
+    if (!order) {
+      throw new NotFoundException(`Order with ID ${id} not found`);
+    }
+
+    // Update order status
+    order.status = updateOrderStatusDto.status;
+    
+    // Save the updated order
+    const updatedOrder = await this.orderRepository.save(order);
+
+    return {
+      success: true,
+      message: 'Order status updated successfully',
+      order: updatedOrder
     };
   }
 } 

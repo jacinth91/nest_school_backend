@@ -1,7 +1,8 @@
-import { Injectable, BadRequestException, NotFoundException, InternalServerErrorException } from '@nestjs/common';
+import { Injectable, BadRequestException, NotFoundException, InternalServerErrorException, ConflictException } from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
 import { Repository } from 'typeorm';
 import { Student } from './entities/student.entity';
+import { UpdateStudentDto } from './dto/update-student.dto';
 
 @Injectable()
 export class StudentsService {
@@ -76,5 +77,35 @@ export class StudentsService {
         studentName: 'ASC'
       }
     });
+  }
+
+  async update(id: string, updateStudentDto: UpdateStudentDto) {
+    const student = await this.studentRepository.findOne({ where: { usid: id } });
+    
+    if (!student) {
+      throw new NotFoundException(`Student with ID ${id} not found`);
+    }
+
+    // Check if USID is being updated and if it already exists
+    if (updateStudentDto.usid && updateStudentDto.usid !== student.usid) {
+      const existingStudent = await this.studentRepository.findOne({
+        where: { usid: updateStudentDto.usid }
+      });
+      if (existingStudent) {
+        throw new ConflictException('USID already exists');
+      }
+    }
+
+    // Update student details
+    Object.assign(student, updateStudentDto);
+    
+    // Save the updated student
+    const updatedStudent = await this.studentRepository.save(student);
+
+    return {
+      success: true,
+      message: 'Student updated successfully',
+      student: updatedStudent
+    };
   }
 } 

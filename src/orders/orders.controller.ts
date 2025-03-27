@@ -1,11 +1,12 @@
-import { Controller, Post, Body, UseGuards, BadRequestException, Get, Param } from '@nestjs/common';
-import { ApiTags, ApiOperation, ApiResponse } from '@nestjs/swagger';
+import { Controller, Post, Body, UseGuards, BadRequestException, Get, Param, Patch } from '@nestjs/common';
+import { ApiTags, ApiOperation, ApiResponse, ApiBearerAuth } from '@nestjs/swagger';
 import { OrdersService } from './orders.service';
 import { Order } from './entities/order.entity';
 import { JwtAuthGuard } from '../auth/guards/jwt-auth.guard';
 import { RolesGuard } from '../auth/guards/roles.guard';
 import { Roles } from '../auth/decorators/roles.decorator';
 import { PaymentMethod } from './entities/payment.entity';
+import { UpdateOrderStatusDto } from './dto/update-order-status.dto';
 
 class PlaceOrderDto {
   parentId: number;
@@ -52,5 +53,16 @@ export class OrdersController {
   @ApiResponse({ status: 404, description: 'No orders found' })
   findByParentId(@Param('parentId') parentId: string) {
     return this.ordersService.findByParentId(parentId);
+  }
+
+  @Patch(':id/status')
+  //@UseGuards(JwtAuthGuard, RolesGuard)
+  //@Roles('admin')
+  //@ApiBearerAuth()
+  @ApiOperation({ summary: 'Update order status' })
+  @ApiResponse({ status: 200, description: 'Order status updated successfully' })
+  @ApiResponse({ status: 404, description: 'Order not found' })
+  updateStatus(@Param('id') id: string, @Body() updateOrderStatusDto: UpdateOrderStatusDto) {
+    return this.ordersService.updateStatus(id, updateOrderStatusDto);
   }
 } 
