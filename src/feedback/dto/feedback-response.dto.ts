@@ -5,14 +5,17 @@ export class FeedbackResponseDto {
   @ApiProperty({ description: 'Unique identifier of the feedback' })
   id: number;
 
+  @ApiProperty({ description: 'Parent ID' })
+  parent_id: number;
+
   @ApiProperty({ description: 'Name of the parent who submitted the feedback' })
   parent_name: string;
 
   @ApiProperty({ description: 'Type of query/feedback' })
   query_type: QueryType;
 
-  @ApiProperty({ description: 'Student enrollment ID' })
-  student_enroll_id: string;
+  @ApiProperty({ description: 'Student USID' })
+  student_usid: string;
 
   @ApiProperty({ description: 'Status of the feedback' })
   status: string;
@@ -26,6 +29,7 @@ export class FeedbackResponseDto {
   @ApiProperty({ description: 'Feedback details' })
   details: {
     description: string;
-    file_attachment?: string;
+    file_path?: string;
+    file_type?: string;
   };
 } 

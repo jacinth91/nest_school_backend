@@ -1,37 +1,40 @@
-import { IsString, IsNotEmpty, IsEnum, IsOptional } from 'class-validator';
+import { IsString, IsNotEmpty, IsEnum, IsOptional, IsNumber } from 'class-validator';
 import { ApiProperty } from '@nestjs/swagger';
 import { QueryType } from '../entities/feedback.entity';
 
 export class CreateFeedbackDto {
-  @ApiProperty({ description: 'Name of the parent submitting feedback' })
+  @ApiProperty()
   @IsString()
   @IsNotEmpty()
-  parentName: string;
+  parent_name: string;
 
-  @ApiProperty({ 
-    description: 'Type of query/feedback',
-    enum: QueryType,
-    enumName: 'QueryType'
-  })
+  @ApiProperty()
+  @IsNumber()
+  @IsNotEmpty()
+  parent_id: number;
+
+  @ApiProperty({ enum: QueryType })
   @IsEnum(QueryType)
   @IsNotEmpty()
-  queryType: QueryType;
+  query_type: QueryType;
 
-  @ApiProperty({ description: 'Student enrollment ID' })
+  @ApiProperty()
   @IsString()
   @IsNotEmpty()
-  studentEnrollId: string;
+  student_usid: string;
 
-  @ApiProperty({ description: 'Detailed description of the feedback/query' })
+  @ApiProperty()
   @IsString()
   @IsNotEmpty()
   description: string;
 
-  @ApiProperty({ 
-    description: 'File attachment URL',
-    required: false
-  })
+  @ApiProperty({ required: false })
   @IsString()
   @IsOptional()
-  fileAttachment?: string;
+  file_path?: string;
+
+  @ApiProperty({ required: false })
+  @IsString()
+  @IsOptional()
+  file_type?: string;
 } 

@@ -10,19 +10,19 @@ import { User } from '../auth/decorators/user.decorator';
 
 @ApiTags('feedback')
 @Controller('feedback')
-@UseGuards(JwtAuthGuard, RolesGuard)
+//@UseGuards(JwtAuthGuard, RolesGuard)
 export class FeedbackController {
   constructor(private readonly feedbackService: FeedbackService) {}
 
   @Post()
-  @Roles('parent')
+  //@Roles('parent')
   @ApiOperation({ summary: 'Create new feedback' })
   @ApiResponse({ status: 201, description: 'Feedback created successfully', type: FeedbackResponseDto })
   async create(
     @Body() createFeedbackDto: CreateFeedbackDto,
-    @User() user: { id: number; name: string }
+   //@User() user: { id: number; name: string }
   ): Promise<FeedbackResponseDto> {
-    createFeedbackDto.parentName = user.name;
+    //createFeedbackDto.parent_name = user.name;
     return await this.feedbackService.create(createFeedbackDto);
   }
 

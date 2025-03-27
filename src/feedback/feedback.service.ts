@@ -17,26 +17,30 @@ export class FeedbackService {
   private transformToResponseDto(feedback: Feedback): FeedbackResponseDto {
     return {
       id: feedback.id,
-      parent_name: feedback.parentName,
-      query_type: feedback.queryType,
-      student_enroll_id: feedback.studentEnrollId,
+      parent_id: feedback.parent_id,
+      parent_name: feedback.parent_name,
+      query_type: feedback.query_type,
+      student_usid: feedback.student_usid,
       status: feedback.status,
-      created_at: feedback.createdAt,
-      updated_at: feedback.updatedAt,
+      created_at: feedback.created_at,
+      updated_at: feedback.updated_at,
       details: {
         description: feedback.description,
-        file_attachment: feedback.fileAttachment
+        file_path: feedback.file_path,
+        file_type: feedback.file_type
       }
     };
   }
 
   async create(createFeedbackDto: CreateFeedbackDto): Promise<FeedbackResponseDto> {
     const feedback = this.feedbackRepository.create({
-      parentName: createFeedbackDto.parentName,
-      queryType: createFeedbackDto.queryType,
-      studentEnrollId: createFeedbackDto.studentEnrollId,
+      parent_id: createFeedbackDto.parent_id,
+      parent_name: createFeedbackDto.parent_name,
+      query_type: createFeedbackDto.query_type,
+      student_usid: createFeedbackDto.student_usid,
       description: createFeedbackDto.description,
-      fileAttachment: createFeedbackDto.fileAttachment,
+      file_path: createFeedbackDto.file_path,
+      file_type: createFeedbackDto.file_type,
       status: 'pending'
     });
 
@@ -45,11 +49,11 @@ export class FeedbackService {
     // Publish feedback created event
     await this.pubSubService.publish('feedback:created', {
       id: savedFeedback.id,
-      parent_name: savedFeedback.parentName,
-      query_type: savedFeedback.queryType,
-      student_enroll_id: savedFeedback.studentEnrollId,
+      parent_name: savedFeedback.parent_name,
+      query_type: savedFeedback.query_type,
+      student_usid: savedFeedback.student_usid,
       description: savedFeedback.description,
-      created_at: savedFeedback.createdAt,
+      created_at: savedFeedback.created_at,
     });
 
     return this.transformToResponseDto(savedFeedback);
@@ -57,7 +61,7 @@ export class FeedbackService {
 
   async findAll(): Promise<FeedbackResponseDto[]> {
     const feedbacks = await this.feedbackRepository.find({
-      order: { createdAt: 'DESC' },
+      order: { created_at: 'DESC' },
     });
     return feedbacks.map(feedback => this.transformToResponseDto(feedback));
   }
@@ -84,9 +88,9 @@ export class FeedbackService {
     // Publish status updated event
     await this.pubSubService.publish('feedback:status:updated', {
       id: updatedFeedback.id,
-      parent_name: updatedFeedback.parentName,
+      parent_name: updatedFeedback.parent_name,
       status: updatedFeedback.status,
-      updated_at: updatedFeedback.updatedAt,
+      updated_at: updatedFeedback.updated_at,
     });
 
     return this.transformToResponseDto(updatedFeedback);
@@ -94,24 +98,24 @@ export class FeedbackService {
 
   async findByStudentEnrollId(studentEnrollId: string): Promise<FeedbackResponseDto[]> {
     const feedbacks = await this.feedbackRepository.find({
-      where: { studentEnrollId },
-      order: { createdAt: 'DESC' },
+      where: { student_usid: studentEnrollId },
+      order: { created_at: 'DESC' },
     });
     return feedbacks.map(feedback => this.transformToResponseDto(feedback));
   }
 
   async findByQueryType(queryType: QueryType): Promise<FeedbackResponseDto[]> {
     const feedbacks = await this.feedbackRepository.find({
-      where: { queryType },
-      order: { createdAt: 'DESC' },
+      where: { query_type: queryType },
+      order: { created_at: 'DESC' },
     });
     return feedbacks.map(feedback => this.transformToResponseDto(feedback));
   }
 
   async findByParentName(parentName: string): Promise<FeedbackResponseDto[]> {
     const feedbacks = await this.feedbackRepository.find({
-      where: { parentName },
-      order: { createdAt: 'DESC' },
+      where: { parent_name: parentName },
+      order: { created_at: 'DESC' },
     });
     return feedbacks.map(feedback => this.transformToResponseDto(feedback));
   }
