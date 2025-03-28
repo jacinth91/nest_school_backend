@@ -1,71 +1,34 @@
-import { Injectable, OnModuleInit } from '@nestjs/common';
-import { ConfigService } from '@nestjs/config';
-import Redis from 'ioredis';
+import { Injectable } from '@nestjs/common';
+import { EventEmitter2 } from '@nestjs/event-emitter';
+
+type EventCallback = (...args: any[]) => void;
 
 @Injectable()
-export class PubSubService implements OnModuleInit {
-  private publisher: Redis;
-  private subscriber: Redis;
-  private messageHandlers: Map<string, (message: any) => void> = new Map();
-  private isInitialized = false;
+export class PubSubService {
+  private subscribers: Map<string, EventCallback[]> = new Map();
 
-  constructor(private configService: ConfigService) {}
+  constructor(private eventEmitter: EventEmitter2) {}
 
-  async onModuleInit() {
-    const redisUrl = this.configService.get<string>('REDIS_URL');
-    if (!redisUrl) {
-      throw new Error('REDIS_URL environment variable is not set');
+  async publish(event: string, data: any) {
+    this.eventEmitter.emit(event, data);
+  }
+
+  async subscribe(event: string, callback: EventCallback) {
+    if (!this.subscribers.has(event)) {
+      this.subscribers.set(event, []);
     }
+    this.subscribers.get(event).push(callback);
+    this.eventEmitter.on(event, callback);
+  }
 
-    this.publisher = new Redis(redisUrl);
-    this.subscriber = new Redis(redisUrl);
-
-    // Handle incoming messages
-    this.subscriber.on('message', (channel, message) => {
-      const handler = this.messageHandlers.get(channel);
-      if (handler) {
-        handler(JSON.parse(message));
+  async unsubscribe(event: string, callback: EventCallback) {
+    if (this.subscribers.has(event)) {
+      const callbacks = this.subscribers.get(event);
+      const index = callbacks.indexOf(callback);
+      if (index > -1) {
+        callbacks.splice(index, 1);
+        this.eventEmitter.off(event, callback);
       }
-    });
-
-    this.isInitialized = true;
-  }
-
-  private async ensureInitialized() {
-    if (!this.isInitialized) {
-      await this.onModuleInit();
     }
-  }
-
-  async subscribe(channel: string, handler: (message: any) => void) {
-    await this.ensureInitialized();
-    await this.subscriber.subscribe(channel);
-    this.messageHandlers.set(channel, handler);
-  }
-
-  async publish(channel: string, message: any) {
-    await this.ensureInitialized();
-    await this.publisher.publish(channel, JSON.stringify(message));
-  }
-
-  private handleMessage(channel: string, message: any) {
-    switch (channel) {
-      case 'feedback:created':
-        this.handleFeedbackCreated(message);
-        break;
-      case 'feedback:status:updated':
-        this.handleFeedbackStatusUpdated(message);
-        break;
-    }
-  }
-
-  private handleFeedbackCreated(message: any) {
-    console.log('Processing new feedback:', message);
-    // Implement notification logic here
-  }
-
-  private handleFeedbackStatusUpdated(message: any) {
-    console.log('Processing status update:', message);
-    // Implement notification logic here
   }
 } 
