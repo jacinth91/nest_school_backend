@@ -7,11 +7,12 @@ export class UploadService {
   getMulterConfig() {
     return {
       storage: diskStorage({
-        destination: './uploads', // ✅ Store images in the 'uploads' folder
+        destination: './uploads', // Save files in 'uploads' folder
         filename: (req, file, cb) => {
-          const uniqueSuffix =
-            Date.now() + '-' + Math.round(Math.random() * 1e9);
-          cb(null, uniqueSuffix + extname(file.originalname));
+          // Generate a unique filename
+          const uniqueSuffix = `${Date.now()}-${Math.round(Math.random() * 1e9)}`;
+          const fileExt = extname(file.originalname); // Get file extension
+          cb(null, `${uniqueSuffix}${fileExt}`);
         },
       }),
     };

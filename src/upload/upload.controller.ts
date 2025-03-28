@@ -14,7 +14,9 @@ export class UploadController {
   constructor(private readonly uploadService: UploadService) {}
 
   @Post('image')
-  @UseInterceptors(FileInterceptor('file')) // ✅ No manual Multer config here
+  @UseInterceptors(
+    FileInterceptor('file', new UploadService().getMulterConfig()),
+  ) // ✅ Use custom Multer config
   uploadFile(@UploadedFile() file: Express.Multer.File) {
     if (!file) {
       throw new BadRequestException('Invalid file upload.');
