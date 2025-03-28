@@ -16,6 +16,7 @@ import { ProfilesModule } from './profiles/profiles.module';
 import { CartModule } from './cart/cart.module';
 import { OrdersModule } from './orders/orders.module';
 import { AdminModule } from './admin/admin.module';
+import { UploadModule } from './upload/upload.module';
 @Module({
   imports: [
     ConfigModule.forRoot(),
@@ -31,7 +32,8 @@ import { AdminModule } from './admin/admin.module';
     ClassCategoriesModule,
     ProfilesModule,
     OrdersModule,
-    AdminModule
+    AdminModule,
+    UploadModule,
   ],
   controllers: [AppController],
   providers: [AppService],
