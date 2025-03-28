@@ -1,4 +1,12 @@
-import { Entity, Column, PrimaryGeneratedColumn, ManyToMany, JoinTable, CreateDateColumn, UpdateDateColumn } from 'typeorm';
+import {
+  Entity,
+  Column,
+  PrimaryGeneratedColumn,
+  ManyToMany,
+  JoinTable,
+  CreateDateColumn,
+  UpdateDateColumn,
+} from 'typeorm';
 import { Student } from '../../students/entities/student.entity';
 
 @Entity('parents')
@@ -33,11 +41,14 @@ export class Parent {
   @Column({ nullable: true })
   otp: string;
 
-  @Column({ nullable: true , name: 'otp_expires_at' })
+  @Column({ nullable: true, name: 'otp_expires_at' })
   otpExpiresAt: Date;
 
   @Column({ default: false, name: 'is_otp_verified' })
   isOtpVerified: boolean;
+
+  @Column({ type: 'varchar', length: 255, name: 'image' })
+  imageUrl: string;
 
   // @CreateDateColumn()
   // createdAt: Date;
@@ -46,4 +57,4 @@ export class Parent {
   // updatedAt: Date;
 
   studentData?: Student[];
-} 
+}

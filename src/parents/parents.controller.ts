@@ -1,4 +1,13 @@
-import { Controller, Get, Post, Body, Param, Delete, Put, Req } from '@nestjs/common';
+import {
+  Controller,
+  Get,
+  Post,
+  Body,
+  Param,
+  Delete,
+  Put,
+  Req,
+} from '@nestjs/common';
 import { ParentsService } from './parents.service';
 import { CreateParentDto } from './dto/create-parent.dto';
 import { Parent } from './entities/parent.entity';
@@ -7,9 +16,7 @@ import { Request } from 'express';
 
 @Controller('parents')
 export class ParentsController {
-  constructor(
-    private readonly parentsService: ParentsService,
-  ) {}
+  constructor(private readonly parentsService: ParentsService) {}
 
   @Get('me')
   async getCurrentParent(@Req() req: Request): Promise<Parent> {
@@ -51,4 +58,4 @@ export class ParentsController {
   ): Promise<Parent> {
     return await this.parentsService.removeStudent(id, usid);
   }
-} 
+}
