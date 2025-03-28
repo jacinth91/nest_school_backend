@@ -1,4 +1,9 @@
-import { Injectable, NotFoundException, ConflictException, UnauthorizedException } from '@nestjs/common';
+import {
+  Injectable,
+  NotFoundException,
+  ConflictException,
+  UnauthorizedException,
+} from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
 import { Repository } from 'typeorm';
 import { Admin } from './entities/admin.entity';
@@ -20,7 +25,7 @@ export class AdminService {
   async loadUser(email: string) {
     const admin = await this.adminRepository.findOne({
       where: { email },
-      select: ['id', 'name', 'email', 'role', 'phoneNumber'] // Exclude password
+      select: ['id', 'name', 'email', 'role', 'phoneNumber', 'imageUrl'], // Exclude password
     });
 
     if (!admin) {
@@ -30,20 +35,23 @@ export class AdminService {
     return {
       success: true,
       message: 'User loaded successfully',
-      admin
+      admin,
     };
   }
 
   async login(adminLoginDto: AdminLoginDto) {
     const admin = await this.adminRepository.findOne({
-      where: { email: adminLoginDto.email }
+      where: { email: adminLoginDto.email },
     });
 
     if (!admin) {
       throw new UnauthorizedException('Invalid email or password');
     }
 
-    const isPasswordValid = await bcrypt.compare(adminLoginDto.password, admin.password);
+    const isPasswordValid = await bcrypt.compare(
+      adminLoginDto.password,
+      admin.password,
+    );
     if (!isPasswordValid) {
       throw new UnauthorizedException('Invalid email or password');
     }
@@ -52,11 +60,13 @@ export class AdminService {
     const payload = {
       sub: admin.id,
       email: admin.email, // Encode email in base64
-      role: admin.role
+      role: admin.role,
     };
 
     // Generate JWT token
-    const token = this.jwtService.sign(payload, { secret: process.env.JWT_SECRET });
+    const token = this.jwtService.sign(payload, {
+      secret: process.env.JWT_SECRET,
+    });
 
     return {
       success: true,
@@ -67,14 +77,14 @@ export class AdminService {
         name: admin.name,
         email: admin.email,
         role: admin.role,
-        phoneNumber: admin.phoneNumber
-      }
+        phoneNumber: admin.phoneNumber,
+      },
     };
   }
 
   async create(createAdminDto: CreateAdminDto): Promise<Admin> {
     const existingAdmin = await this.adminRepository.findOne({
-      where: { email: createAdminDto.email }
+      where: { email: createAdminDto.email },
     });
 
     if (existingAdmin) {
@@ -92,15 +102,14 @@ export class AdminService {
 
   async findAll() {
     const admins = await this.adminRepository.find({
-      select: ['name', 'email', 'phoneNumber', 'role'] // Exclude password
+      select: ['name', 'email', 'phoneNumber', 'role', 'imageUrl'], // Exclude password
     });
 
     return {
       success: true,
       message: 'Admins retrieved successfully',
-      admins
+      admins,
     };
-  
   }
 
   async findOne(id: string): Promise<Admin> {
@@ -130,13 +139,13 @@ export class AdminService {
   async findVendors() {
     const vendors = await this.adminRepository.find({
       where: { role: 'vendor' },
-      select: ['name', 'email', 'phoneNumber', 'role'] // Exclude password
+      select: ['name', 'email', 'phoneNumber', 'role', 'imageUrl'], // Exclude password
     });
 
     return {
       success: true,
       message: 'Vendors retrieved successfully',
-      vendors
+      vendors,
     };
   }
-} 
+}
