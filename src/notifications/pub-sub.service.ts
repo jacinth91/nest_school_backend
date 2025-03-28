@@ -10,6 +10,7 @@ export class PubSubService {
   constructor(private eventEmitter: EventEmitter2) {}
 
   async publish(event: string, data: any) {
+    console.log('Publishing event:', event, data);
     this.eventEmitter.emit(event, data);
   }
 
